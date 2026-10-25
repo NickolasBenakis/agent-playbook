@@ -22,6 +22,12 @@ intervene. Concretely:
 Classify every task by **impact** and **attention needed**, then use the matching
 workflow. If the human didn't say, pick one, state it in one line, and proceed.
 
+Once you've picked a workflow, load and follow its skill (`factory`, `fanout`,
+or `oneshot`) before starting the work; the table below is only the routing,
+the skill is the procedure. Skip this only for trivial tasks (a one-line fix, a
+question, a quick lookup), which you just do directly. Given several tasks at
+once, load `triage` first.
+
 | | Low attention | High attention |
 |---|---|---|
 | **High impact** | `factory` — pipeline with plan + PR checkpoints | `fanout` — human drives, subagents execute |
