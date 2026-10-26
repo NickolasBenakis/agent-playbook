@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Reports whether this branch's intent records were invalidated by changes on
+# the base branch since the branch forked.
+# Usage: intent-stale [base=origin/main]     (run inside the branch's worktree)
+#
+# An intent record is .intent/<slug>.md with frontmatter fields `task`,
+# `branch`, `depends` (comma-separated globs; `*` also matches `/`) and
+# `verify` (the command that proves the intent still holds).
+# A record is stale when the base changed a file it depends on or a file this
+# branch edits. Prints one line per record: `<slug> fresh` or
+# `<slug> stale <files...>`. Exits 1 if any record is stale.
+set -euo pipefail
+
+base="${1:-origin/main}"
+fork="$(git merge-base HEAD "$base")"
+upstream="$(git diff --name-only "$fork" "$base")"
+ours="$(git diff --name-only "$fork" HEAD)"
+
+shopt -s nullglob
+records=(.intent/*.md)
+if [[ ${#records[@]} -eq 0 ]]; then
+  echo "no intent records in .intent/"
+  exit 0
+fi
+
+field() { sed -n "s/^$1:[[:space:]]*//p" "$2" | head -1; }
+
+any_stale=0
+for record in "${records[@]}"; do
+  slug="$(basename "$record" .md)"
+  IFS=',' read -ra globs <<< "$(field depends "$record")"
+  hits=()
+  while IFS= read -r file; do
+    [[ -z "$file" || "$file" == .intent/* ]] && continue
+    matched=0
+    for glob in ${globs[@]+"${globs[@]}"}; do
+      glob="${glob#"${glob%%[![:space:]]*}"}"; glob="${glob%"${glob##*[![:space:]]}"}"
+      # shellcheck disable=SC2053  # unquoted on purpose: glob match
+      [[ -n "$glob" && "$file" == $glob ]] && matched=1
+    done
+    grep -qxF "$file" <<< "$ours" && matched=1
+    [[ $matched -eq 1 ]] && hits+=("$file")
+  done <<< "$upstream"
+
+  if [[ ${#hits[@]} -eq 0 ]]; then
+    echo "$slug fresh"
+  else
+    echo "$slug stale ${hits[*]}"
+    any_stale=1
+  fi
+done
+exit "$any_stale"

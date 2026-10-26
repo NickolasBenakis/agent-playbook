@@ -22,6 +22,7 @@ profiles/<name>.local.md  private overlay, gitignored (secrets-free notes only)
 skills/                   triage, fanout, factory, oneshot
 automations/              factory-sweep: bb automation that unblocks threads
 install.sh                links everything into bb / Claude Code / Codex
+tests/run.sh              self-test for intent-stale and the installer
 ```
 
 ## Install on a machine
@@ -48,12 +49,23 @@ accounts (or rotating them with `bb pool`) keeps the same playbook.
 ## Factory sweep (optional)
 
 A scheduled bb agent that nudges `[factory]`/`[fanout]` threads with red CI,
-open review comments, or stalled work, and reports which threads need you.
+open review comments, branches behind main, or stalled work, and reports which threads need you.
 
 ```sh
 bb project list --include-personal --json     # find a project id
 automations/install-factory-sweep.sh <project-id> <model> ['*/30 9-19 * * 1-5'] [timezone]
 ```
+
+## Intent records
+
+Factory branches carry `.intent/<slug>.md`: what the change must achieve, the
+code it depends on, and the command that verifies it. When main moves,
+`skills/factory/intent-stale` says whether a branch is still valid. A branch
+that is still valid merges main in; an invalidated one re-applies its intent on
+the new base instead of patching conflict markers by hand. Approved PRs whose
+behavior changed during repair go back to review. The sweep nudges branches
+that fell behind. Records merge with their PRs, so `.intent/` becomes the
+repo's memory of why code exists.
 
 ## Using it at work
 
