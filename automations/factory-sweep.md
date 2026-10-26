@@ -6,6 +6,7 @@ have to poll. Do not write code yourself.
 2. For each one, run `bb thread show <id> --work-status --json` and classify:
    - CI failing on its PR → `bb thread tell <id> 'CI is red on your PR. Read the failing check log, fix it, and push. Update your title when green.'`
    - PR has unresolved review comments → tell it to address them and push.
+   - PR is behind its base branch or has merge conflicts → `bb thread tell <id> 'Your base branch moved. Run the factory "When the base moves" steps: intent-stale, then merge or re-apply your intent, verify, and push.'`
    - idle with title state `building` or `in-review` and no PR → tell it to
      continue to the next factory stage or set `blocked: <reason>`.
    - title says `blocked:` or `awaiting-approval` → leave it; it's waiting on
