@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Playbook</title>
+<style>
+  :root {
+    --pb-bg: var(--background, #fbfaf8);
+    --pb-fg: var(--foreground, #1d1c1a);
+    --pb-muted: var(--muted-foreground, #6b6862);
+    --pb-card: var(--card, #ffffff);
+    --pb-border: var(--border, #e4e1db);
+    --pb-raised: var(--surface-recessed, #f3f1ec);
+    --pb-brand: var(--brand, #c2410c);
+    --pb-radius: var(--radius, 10px);
+    --pb-mono: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    --pb-sans: var(--font-sans, system-ui, -apple-system, sans-serif);
+    --pb-c1: var(--chart-1, #2563eb);
+    --pb-c2: var(--chart-2, #16a34a);
+    --pb-c3: var(--chart-3, #c2410c);
+    --pb-human: var(--warning, #ca8a04);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --pb-bg: var(--background, #161514);
+      --pb-fg: var(--foreground, #ecebe8);
+      --pb-muted: var(--muted-foreground, #9a968f);
+      --pb-card: var(--card, #1f1e1c);
+      --pb-border: var(--border, #34322e);
+      --pb-raised: var(--surface-recessed, #1a1917);
+    }
+  }
+  body { background: var(--pb-bg); color: var(--pb-fg); font: 14px/1.5 var(--pb-sans); margin: 0; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0; }
+  h2 { font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--pb-muted); margin: 24px 0 10px; }
+  h2:first-child { margin-top: 0; }
+  p.lede { margin: 0 0 4px; }
+
+  .matrix { display: grid; grid-template-columns: 72px 1fr 1fr; grid-template-rows: auto 1fr 1fr; gap: 6px; }
+  .axis { font-size: 12px; color: var(--pb-muted); display: flex; align-items: center; justify-content: center; text-align: center; }
+  .cell {
+    background: var(--pb-card); border: 1px solid var(--pb-border); border-radius: var(--pb-radius);
+    padding: 14px; text-align: left; font: inherit; color: inherit; cursor: pointer; min-height: 96px;
+    display: flex; flex-direction: column; gap: 4px; transition: border-color .15s ease-out;
+  }
+  .cell:hover { border-color: var(--pb-muted); }
+  .cell[aria-pressed="true"] { border-color: var(--wf); box-shadow: inset 0 0 0 1px var(--wf); }
+  .cell:focus-visible { outline: 2px solid var(--pb-brand); outline-offset: 2px; }
+  .cell .cmd { font-family: var(--pb-mono); font-weight: 600; color: var(--wf); }
+  .cell .what { color: var(--pb-muted); font-size: 13px; }
+  .cell.drop { cursor: default; background: var(--pb-raised); border-style: dashed; }
+
+  .detail { background: var(--pb-card); border: 1px solid var(--pb-border); border-radius: var(--pb-radius); padding: 16px; margin-top: 10px; }
+  .detail .head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .detail .head code { font-family: var(--pb-mono); font-weight: 600; color: var(--wf); font-size: 15px; }
+  .detail .use { color: var(--pb-muted); margin: 4px 0 14px; }
+  ol.stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+  ol.stages li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; position: relative; padding-bottom: 12px; }
+  ol.stages li:last-child { padding-bottom: 0; }
+  ol.stages li::before { content: ""; position: absolute; left: 10px; top: 20px; bottom: 0; width: 2px; background: var(--pb-border); }
+  ol.stages li:last-child::before { display: none; }
+  .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--wf); background: var(--pb-card); font-size: 11px; font-weight: 600; display: grid; place-items: center; color: var(--wf); }
+  .human .dot { background: var(--pb-human); border-color: var(--pb-human); color: #fff; }
+  .stage-name { font-weight: 600; }
+  .stage-name small { font-weight: 500; color: var(--pb-human); margin-left: 6px; font-size: 12px; }
+  .stage-desc { color: var(--pb-muted); font-size: 13px; }
+
+  .states { display: flex; flex-wrap: wrap; gap: 6px; }
+  .state { font-family: var(--pb-mono); font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--pb-border); background: var(--pb-card); }
+  .state.h { border-color: var(--pb-human); color: var(--pb-human); }
+  .title-eg { font-family: var(--pb-mono); font-size: 13px; background: var(--pb-raised); border-radius: 6px; padding: 8px 10px; margin: 0 0 10px; overflow-x: auto; }
+
+  ul.rules { margin: 0; padding-left: 18px; }
+  ul.rules li { margin: 2px 0; }
+  .legend { font-size: 12px; color: var(--pb-muted); margin-top: 8px; display: flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; background: var(--pb-human); display: inline-block; }
+
+  @media (max-width: 520px) {
+    .matrix { grid-template-columns: 1fr 1fr; }
+    .axis.row { display: none; }
+    .axis.corner { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cell { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2>The rule</h2>
+  <p class="lede">Your attention is the scarce resource. Each task gets the workflow that needs the least of it, and agents handle the rest.</p>
+
+  <h2>Route by impact × attention</h2>
+  <div class="matrix" role="group" aria-label="Workflow matrix">
+    <div class="axis corner"></div>
+    <div class="axis">Low attention</div>
+    <div class="axis">High attention</div>
+
+    <div class="axis row">High impact</div>
+    <button class="cell" data-wf="factory" style="--wf: var(--pb-c1)">
+      <span class="cmd">/factory</span>
+      <span class="what">Pipeline on rails. You check the plan and the PR.</span>
+    </button>
+    <button class="cell" data-wf="fanout" style="--wf: var(--pb-c3)">
+      <span class="cmd">/fanout</span>
+      <span class="what">You drive, subagents do the work and each returns a PR.</span>
+    </button>
+
+    <div class="axis row">Low impact</div>
+    <button class="cell" data-wf="oneshot" style="--wf: var(--pb-c2)">
+      <span class="cmd">/oneshot</span>
+      <span class="what">Loops to a checkable finish line. You never look.</span>
+    </button>
+    <div class="cell drop" style="--wf: var(--pb-muted)">
+      <span class="cmd">drop it</span>
+      <span class="what">Or reshape it until it fits <code>/oneshot</code>.</span>
+    </div>
+  </div>
+  <div class="legend"><i></i> marks a step where you're involved. For several tasks at once, start with <code>/triage</code>.</div>
+
+  <div class="detail" id="detail" aria-live="polite"></div>
+
+  <h2>Status in five seconds</h2>
+  <p class="title-eg">[factory] CSV export — pr-open: #142</p>
+  <div class="states">
+    <span class="state">planning</span>
+    <span class="state h">awaiting-approval</span>
+    <span class="state">building</span>
+    <span class="state">in-review</span>
+    <span class="state">ci-red</span>
+    <span class="state h">blocked: &lt;reason&gt;</span>
+    <span class="state">pr-open: &lt;url&gt;</span>
+    <span class="state">done</span>
+  </div>
+
+  <h2>Always</h2>
+  <ul class="rules">
+    <li>One task → one branch → one PR, around 600–1,200 lines at most.</li>
+    <li>Fix tests, lint and CI before reporting. Never hand back red work.</li>
+    <li>Ask all your questions at once, each with a recommended answer.</li>
+    <li>No merging, deploying or pushing to main unless explicitly told.</li>
+  </ul>
+</div>
+
+<script>
+  const WORKFLOWS = {
+    factory: {
+      use: "Normal feature work with clear acceptance criteria. Say “auto” to skip both checkpoints.",
+      stages: [
+        ["plan", "Read the code, write a plan, and split it into PR-sized tasks."],
+        ["approve plan", "One question, then it continues.", true],
+        ["build", "Each task gets its own worktree and branch. Tasks that don't depend on each other run in parallel."],
+        ["self-review", "/code-review or a fresh reviewer agent checks the diff."],
+        ["CI green", "Push and fix until CI is green. After 3 failed attempts, it's marked blocked."],
+        ["review PR", "PR marked ready, with the summary and how it was verified.", true],
+      ],
+    },
+    fanout: {
+      use: "Core product work, unclear design, dogfooding. The main thread is your control room.",
+      stages: [
+        ["you dump work", "“This is broken”, “add X”, “fix this with a subagent”.", true],
+        ["brief", "Each item becomes a self-contained brief with a finish line."],
+        ["dispatch", "One subagent or child thread per item, in parallel, each in a worktree."],
+        ["verify", "Checks the diff and test output before marking an item done. One retry, then it's escalated to you."],
+        ["board", "Every item ends as pr-open, done, or needs-you.", true],
+      ],
+    },
+    oneshot: {
+      use: "Experiments, internal tools, migrations. Anything off the critical path.",
+      stages: [
+        ["finish line", "A check a script can run: tests, CLI output, a parity check."],
+        ["scaffold", "An isolated branch or folder, away from critical-path code."],
+        ["loop", "Implement, run the check, fix. Decisions are logged to DECISIONS.md, with no questions to you."],
+        ["harness", "For big mechanical work: units in dependency order, one brief each, and a check that fails if the new version falls behind."],
+        ["result", "Finish line met, or stopped after the same failure 3 times, with what it learned.", true],
+      ],
+    },
+  };
+
+  const detail = document.getElementById("detail");
+  const cells = document.querySelectorAll("button.cell");
+
+  function show(name) {
+    const wf = WORKFLOWS[name];
+    const color = document.querySelector(`[data-wf="${name}"]`).style.getPropertyValue("--wf");
+    cells.forEach(c => c.setAttribute("aria-pressed", String(c.dataset.wf === name)));
+    detail.style.setProperty("--wf", color);
+    detail.innerHTML = `
+      <div class="head"><code>/${name}</code></div>
+      <p class="use">${wf.use}</p>
+      <ol class="stages">${wf.stages.map(([n, d, human], i) => `
+        <li class="${human ? "human" : ""}">
+          <span class="dot">${i + 1}</span>
+          <div><div class="stage-name">${n}${human ? "<small>you</small>" : ""}</div>
+          <div class="stage-desc">${d}</div></div>
+        </li>`).join("")}
+      </ol>`;
+  }
+
+  cells.forEach(c => c.addEventListener("click", () => show(c.dataset.wf)));
+  show("factory");
+</script>
+</body>
+</html>

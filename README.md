@@ -13,6 +13,8 @@ workflow by impact × attention, then let agents carry the work.
 
 `/triage` sorts a task list into those cells.
 
+Interactive overview: [docs/playbook.html](docs/playbook.html). In bb, ask an agent to show it inline.
+
 ## Layout
 
 ```
