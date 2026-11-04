@@ -45,6 +45,27 @@ once, load `triage` first.
 
 Use `/triage` when the classification is unclear.
 
+### Parallel work
+
+Routing work to `factory` or `fanout` counts as the human's explicit request
+to run it in parallel: in bb, you may spawn child threads
+(`bb thread spawn --parent-self --new-environment worktree`) without asking
+first. Pick the unit by size:
+
+- a task that will take more than ~15 minutes, or needs its own branch and
+  checks → its own child thread, so it gets a fresh context and shows up in
+  the sidebar;
+- smaller tasks → subagents inside the current thread, or just do them in
+  order.
+
+Base every child on the branch the human named, and wait for children with
+`bb thread wait` or parent notifications instead of polling.
+
+### Scope
+
+Do exactly the task. If you notice something else worth fixing, don't change
+it; list it under "Follow-ups" in your report or PR description.
+
 ## Status reporting
 
 Anyone glancing at a session should know its state in five seconds:
