@@ -146,10 +146,10 @@
     factory: {
       use: "Normal feature work with clear acceptance criteria. Say “auto” to skip both checkpoints.",
       stages: [
-        ["plan", "Read the code, write a plan, and split it into PR-sized tasks."],
+        ["plan", "Read the code. Short plan in the PR for clear specs; a plan file only when the spec is vague or spans several PRs."],
         ["approve plan", "One question, then it continues.", true],
-        ["build", "Each task gets its own worktree and branch. Tasks that don't depend on each other run in parallel."],
-        ["self-review", "/code-review or a fresh reviewer agent checks the diff."],
+        ["build", "Each task gets its own worktree and branch. Parallel only for 5+ tasks, long tasks, or when you're away."],
+        ["self-review", "/code-review or a fresh reviewer agent checks the diff. Decisions and follow-ups are listed."],
         ["CI green", "Push and fix until CI is green. After 3 failed attempts, it's marked blocked."],
         ["review PR", "PR marked ready, with the summary and how it was verified.", true],
       ],
