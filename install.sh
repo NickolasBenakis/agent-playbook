@@ -4,13 +4,16 @@
 #        ./install.sh --uninstall
 #
 # Re-run after `git pull` to pick up profile changes; skills are symlinked, so
-# edits to skills/ take effect immediately.
+# edits to skills/ take effect immediately. Set PLAYBOOK_NO_HOOKS=1 to skip
+# (or remove) the Claude Code hooks.
 set -euo pipefail
 
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 built="$repo/.generated/AGENTS.md"
 marker="# agent-playbook (managed by $repo/install.sh)"
 skill_roots=("$HOME/.agents/skills" "$HOME/.claude/skills")
+agents_dir="$HOME/.claude/agents"
+claude_settings="$HOME/.claude/settings.json"
 
 # Replace target with a symlink to source, backing up a real file once.
 link() {
@@ -44,6 +47,8 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   for root in "${skill_roots[@]}"; do
     for dir in "$repo"/skills/*/; do unlink_ours "$root/$(basename "$dir")"; done
   done
+  for agent in "$repo"/agents/*.md; do unlink_ours "$agents_dir/$(basename "$agent")"; done
+  [[ -f "$claude_settings" ]] && python3 "$repo/hooks/settings.py" uninstall "$repo" "$claude_settings"
   if [[ -f "$claude_md" ]] && grep -qF "$marker" "$claude_md"; then
     grep -vF -e "$marker" -e "@$built" "$claude_md" > "$claude_md.tmp" && mv "$claude_md.tmp" "$claude_md"
     echo "  removed import from $claude_md"
@@ -86,5 +91,17 @@ for root in "${skill_roots[@]}"; do
     link "${dir%/}" "$root/$(basename "$dir")"
   done
 done
+
+echo "Subagents (Claude Code)"
+for agent in "$repo"/agents/*.md; do
+  link "$agent" "$agents_dir/$(basename "$agent")"
+done
+
+echo "Hooks (Claude Code)"
+if [[ "${PLAYBOOK_NO_HOOKS:-}" == "1" ]]; then
+  python3 "$repo/hooks/settings.py" uninstall "$repo" "$claude_settings"
+else
+  python3 "$repo/hooks/settings.py" install "$repo" "$claude_settings"
+fi
 
 echo "Done. Start a new session to load the playbook."

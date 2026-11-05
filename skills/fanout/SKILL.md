@@ -21,17 +21,19 @@ into subagents.
    - branch name `fanout/<short-slug>`
    - finish line: tests/typecheck pass, PR opened (or diff ready if no remote)
 2. Launch one subagent per independent item, in an isolated worktree when the
-   tool supports it. Run them in parallel when the human is actively feeding
-   work or there are several items; a single small item can just be done. Items that touch the same files go to
-   one subagent, sequentially.
+   tool supports it. Run several at once only when AGENTS.md rule 6 allows
+   it (5+ independent items, long items, or the human asked); otherwise one
+   at a time, and a single small item can just be done.
+   Items that touch the same files go to one subagent, sequentially.
 3. Keep a running board in your replies, updated whenever it changes:
 
    | Item | Agent | State | PR |
    |------|-------|-------|----|
 
-4. When a subagent returns, verify its claim (open the diff, check the test
-   output) before marking it done. If it failed, re-brief once with what went
-   wrong; on a second failure, bring it to the human.
+4. When a subagent returns, verify its claim before marking it done: check
+   the test output, and for non-trivial diffs run the `playbook-reviewer`
+   subagent with the item's acceptance criteria. If it failed, re-brief once
+   with what went wrong; on a second failure, bring it to the human.
 5. Let the human keep going: "fix this with a subagent" should be all it takes.
    Don't ask for confirmation on items that are clearly scoped.
 
