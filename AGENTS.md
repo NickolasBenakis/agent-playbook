@@ -16,6 +16,11 @@ intervene. Concretely:
   reporting. Don't hand back work that is red.
 - When you finish, say what changed, how it was verified, and the one thing (if
   any) that needs the human.
+- Don't add ceremony the model already does well. Strong models plan, test and
+  stay in scope on their own; this playbook adds only what they skip: status,
+  surfaced decisions, follow-ups and an independent review. Benchmarks on
+  well-specified tasks showed no quality or speed gain from extra process,
+  only extra tokens (see `docs/benchmarks.md`).
 
 ## Pick the workflow before starting work
 
@@ -44,6 +49,40 @@ once, load `triage` first.
   output matches), then loop until it is met without involving the human.
 
 Use `/triage` when the classification is unclear.
+
+### Parallel work
+
+Default to doing tasks one after another in the current thread. Parallel child
+threads cost about 2.4x the tokens and saved no time on a handful of tasks,
+because the slowest child sets the pace. Go parallel only when at least one is
+true:
+
+- 5 or more independent tasks;
+- a task that will take more than ~30 minutes, or needs its own branch and
+  long-running checks;
+- the human said they are stepping away, or asked for parallel work.
+
+Then, in bb, spawn child threads
+(`bb thread spawn --parent-self --new-environment worktree`) without asking
+first; routing to `factory` or `fanout` counts as the request. Base every child
+on the branch the human named, and wait with `bb thread wait` or parent
+notifications instead of polling.
+
+A child starts with none of your context. Its brief must name the existing
+code to reuse (helpers, patterns, tables, test setup) and the conventions to
+follow, so it extends the codebase instead of inventing a parallel version.
+
+### Scope, decisions and review
+
+- **Scope**: do exactly the task. If you notice something else worth fixing,
+  don't change it; list it under "Follow-ups" in your report or PR description.
+- **Decisions**: any choice the human might make differently goes under
+  "Decisions" in your report: an ambiguous spec you interpreted, a cap or limit
+  you added, a fallback, a dropped edge case. Never bury these in code.
+- **Independent review**: before reporting non-trivial work, have a fresh
+  subagent (or `/code-review`) review the diff for correctness bugs, especially
+  on real-world inputs the tests don't cover. Fix confirmed findings. This is
+  the step that most often catches real bugs; don't skip it.
 
 ## Status reporting
 

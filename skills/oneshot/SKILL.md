@@ -25,9 +25,13 @@ to start this and forget it until the result is ready.
    - hand each unit to a subagent with a self-contained brief
    - a check that fails if the new side falls behind the old (counts,
      parity tests)
-5. **Stop conditions**: finish line met → report. Same failure 3 times, or the
-   approach is clearly wrong → stop and report what you learned and what you'd
-   try next. Never loop indefinitely.
+5. **Review before reporting**: low attention means the human won't catch what
+   you miss. Once the finish line passes, have a fresh subagent review the diff
+   for correctness bugs, especially on real-world inputs the fixtures don't
+   cover (other quote styles, redirects, encodings). Fix confirmed findings.
+6. **Stop conditions**: finish line met and reviewed → report. Same failure 3
+   times, or the approach is clearly wrong → stop and report what you learned
+   and what you'd try next. Never loop indefinitely.
 
 ## Tools
 

@@ -13,16 +13,20 @@ nothing, just get the PR or merge if explicitly allowed).
 
 Update the session/thread title at each stage: `[factory] <task> — <stage>`.
 
-1. **plan**: read the code, then write a plan file `docs/plans/<slug>.md` (or
-   the PR description draft if the repo has no docs folder):
+1. **plan**: read the code. If the spec is clear and the change fits in one
+   PR, put a short plan (approach, files, finish line) in the PR description
+   draft and move on; don't write a plan file. Write `docs/plans/<slug>.md`
+   only when the spec is ambiguous, the work splits into several PRs, or the
+   human asked to approve a plan:
    - problem, approach, files to change, risks
    - task breakdown: each task = one PR, ≤ ~1,200 changed lines
    - finish line per task (tests to add or run, behavior to check)
 2. **awaiting-approval** (skip in `auto`): show the plan's task list and stop.
    Ask once. Accept edits to the plan, then continue.
 3. **building**: per task, one branch `factory/<slug>-<n>` in an isolated
-   worktree. Independent tasks may run in parallel as subagents/child threads;
-   dependent tasks run in order, each based on the previous branch.
+   worktree. Run tasks in order by default; go parallel only under the
+   thresholds in AGENTS.md "Parallel work". Dependent tasks always run in
+   order, each based on the previous branch.
 4. **in-review**: before any human sees it, review your own diff adversarially:
    use `/code-review` if available, otherwise a fresh subagent given only the
    diff and the plan, asked to find correctness bugs. Fix confirmed findings.
@@ -30,7 +34,8 @@ Update the session/thread title at each stage: `[factory] <task> — <stage>`.
    and watch CI. On red: read the failing log, fix, push again. After 3 failed
    attempts on the same failure, mark `blocked: ci <check name>` and stop.
 6. **pr-open**: mark the PR ready. The description includes the task summary,
-   the plan link, verification steps, and anything the reviewer must judge.
+   the plan, verification steps, a "Decisions" section (interpretations, caps,
+   fallbacks) and "Follow-ups".
 7. **done**: only merge if the human explicitly allowed merging for this
    task; otherwise the PR being green and ready is done.
 
