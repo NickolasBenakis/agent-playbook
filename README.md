@@ -64,11 +64,11 @@ Correctness was checked with hidden tests the agents never saw. Quality was
 scored 1–5 by a blind reviewer who didn't know which arm wrote which code.
 Method and raw numbers: [docs/benchmarks.md](docs/benchmarks.md).
 
-**Scoreboard:** of the 19 comparisons below, the playbook won 9, plain won 6
-and 4 were ties.
+**Scoreboard:** of the 19 rows below, the playbook won 7, plain won 7 and 5
+were ties. They win different things:
 - **The playbook won** on code quality and on telling you about risks.
-- **Plain won** on speed and tokens.
-- **Ties:** correctness on tests and secret leaks.
+- **Plain won** on speed and tokens, and on the one read-only audit.
+- **Ties:** correctness on hidden tests, and secret leaks.
 
 | Round | Model | Scenario | Measured | Plain | Playbook | Better |
 |---|---|---|---|---|---|---|
