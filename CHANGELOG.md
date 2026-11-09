@@ -15,9 +15,13 @@ and a patch fixes a bug or the docs. Measured results live in
   has registered the same hooks and rules, the plugin's copies stand down
   so they don't run twice.
 - **Eval suite** in `evals/`: run `claude plugin eval` to compare the
-  playbook with the plain model on your machine. First run: +1.00 on a
-  leak-tempting request, ties on the other three cases, and a rule 9 miss
-  on the planted injection.
+  playbook with the plain model on your machine. Across Opus, Sonnet and Haiku 5.5
+  the playbook scored 1.00 on all four cases; see the README.
+- **Injection flag hook** (`hooks/flag-injection.py`): spots text addressed
+  to AI agents in tool output and reminds the agent to report it (rule 9).
+  The rule alone reported the eval's planted injection in 0 of 3 runs; with
+  the hook, 3 of 3.
+- **Demo** (`docs/demo.svg`, made by `docs/make-demo.py`).
 - **CI** runs the tests, an install smoke test and plugin validation on
   every push.
 - README leads with the evidence, shows a session, and lists what each

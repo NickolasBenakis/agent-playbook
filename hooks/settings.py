@@ -29,6 +29,10 @@ OURS = {
         {"matcher": "Bash|Read|Grep|Edit|Write|MultiEdit|NotebookEdit",
          "hooks": [{"type": "command", "command": cmd("guard-secrets.py"), "timeout": 30}]},
     ],
+    "PostToolUse": [
+        {"matcher": "Read|Bash|Grep|WebFetch|WebSearch|mcp__.*",
+         "hooks": [{"type": "command", "command": cmd("flag-injection.py"), "timeout": 10}]},
+    ],
     "SessionStart": [{"hooks": [{"type": "command", "command": cmd("stop-check.py", "--baseline"), "timeout": 30}]}],
     "UserPromptSubmit": [{"hooks": [{"type": "command", "command": cmd("stop-check.py", "--baseline"), "timeout": 30}]}],
     "Stop": [{"hooks": [{"type": "command", "command": cmd("stop-check.py"), "timeout": 600,

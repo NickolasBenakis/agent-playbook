@@ -1,18 +1,30 @@
 {
-  "description": "agent-playbook: load the rules, guard git and secrets, and don't stop while the repo check is red",
+  "description": "agent-playbook: load the rules, guard git and secrets, flag injected instructions, and don't stop while the repo check is red",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session-context.py\"", "timeout": 10},
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" stop-check.py --baseline", "timeout": 30}
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/session-context.py\"",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" stop-check.py --baseline",
+            "timeout": 30
+          }
         ]
       }
     ],
     "UserPromptSubmit": [
       {
         "hooks": [
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" stop-check.py --baseline", "timeout": 30}
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" stop-check.py --baseline",
+            "timeout": 30
+          }
         ]
       }
     ],
@@ -20,20 +32,45 @@
       {
         "matcher": "Bash",
         "hooks": [
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" guard-git.py", "timeout": 10}
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" guard-git.py",
+            "timeout": 10
+          }
         ]
       },
       {
         "matcher": "Bash|Read|Grep|Edit|Write|MultiEdit|NotebookEdit",
         "hooks": [
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" guard-secrets.py", "timeout": 30}
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" guard-secrets.py",
+            "timeout": 30
+          }
         ]
       }
     ],
     "Stop": [
       {
         "hooks": [
-          {"type": "command", "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" stop-check.py", "timeout": 600, "statusMessage": "agent-playbook: running the repo check"}
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" stop-check.py",
+            "timeout": 600,
+            "statusMessage": "agent-playbook: running the repo check"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Read|Bash|Grep|WebFetch|WebSearch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/plugin_hook.py\" flag-injection.py",
+            "timeout": 10
+          }
         ]
       }
     ]

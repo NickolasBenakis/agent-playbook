@@ -17,7 +17,7 @@ import sys
 
 TAG = "AGENT_PLAYBOOK_HOOK=1"
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCRIPTS = {"guard-git.py", "guard-secrets.py", "stop-check.py"}
+SCRIPTS = {"flag-injection.py", "guard-git.py", "guard-secrets.py", "stop-check.py"}
 
 
 def script_install_runs(script):

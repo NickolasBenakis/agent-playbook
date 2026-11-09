@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="468" viewBox="0 0 760 468" role="img"
+  aria-label="A factory session: the agent builds the endpoint, its reviewer finds three bugs, it fixes them and opens a PR with a decision for you.">
+<style>
+text{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:14px;opacity:0}
+@keyframes l0{0%,0.00%{opacity:0}0.50%,97%{opacity:1}100%{opacity:0}}.l0{animation:l0 16.8s linear infinite}@keyframes l2{0%,7.14%{opacity:0}7.64%,97%{opacity:1}100%{opacity:0}}.l2{animation:l2 16.8s linear infinite}@keyframes l3{0%,10.71%{opacity:0}11.21%,97%{opacity:1}100%{opacity:0}}.l3{animation:l3 16.8s linear infinite}@keyframes l4{0%,14.29%{opacity:0}14.79%,97%{opacity:1}100%{opacity:0}}.l4{animation:l4 16.8s linear infinite}@keyframes l6{0%,21.43%{opacity:0}21.93%,97%{opacity:1}100%{opacity:0}}.l6{animation:l6 16.8s linear infinite}@keyframes l7{0%,25.00%{opacity:0}25.50%,97%{opacity:1}100%{opacity:0}}.l7{animation:l7 16.8s linear infinite}@keyframes l8{0%,28.57%{opacity:0}29.07%,97%{opacity:1}100%{opacity:0}}.l8{animation:l8 16.8s linear infinite}@keyframes l9{0%,32.14%{opacity:0}32.64%,97%{opacity:1}100%{opacity:0}}.l9{animation:l9 16.8s linear infinite}@keyframes l10{0%,35.71%{opacity:0}36.21%,97%{opacity:1}100%{opacity:0}}.l10{animation:l10 16.8s linear infinite}@keyframes l11{0%,39.29%{opacity:0}39.79%,97%{opacity:1}100%{opacity:0}}.l11{animation:l11 16.8s linear infinite}@keyframes l13{0%,46.43%{opacity:0}46.93%,97%{opacity:1}100%{opacity:0}}.l13{animation:l13 16.8s linear infinite}@keyframes l14{0%,50.00%{opacity:0}50.50%,97%{opacity:1}100%{opacity:0}}.l14{animation:l14 16.8s linear infinite}@keyframes l15{0%,53.57%{opacity:0}54.07%,97%{opacity:1}100%{opacity:0}}.l15{animation:l15 16.8s linear infinite}@keyframes l16{0%,57.14%{opacity:0}57.64%,97%{opacity:1}100%{opacity:0}}.l16{animation:l16 16.8s linear infinite}@keyframes l17{0%,60.71%{opacity:0}61.21%,97%{opacity:1}100%{opacity:0}}.l17{animation:l17 16.8s linear infinite}
+@media (prefers-reduced-motion:reduce){text{animation:none!important;opacity:1}}
+</style>
+<rect width="760" height="468" rx="10" fill="#18181b"/>
+<circle cx="22" cy="20" r="6" fill="#ff5f57"/><circle cx="42" cy="20" r="6" fill="#febc2e"/><circle cx="62" cy="20" r="6" fill="#28c840"/>
+<text class="l0" x="20" y="52" fill="#e6e6e6" font-weight="600" xml:space="preserve">&gt; Add DELETE /api/events/:id so customers can remove an event.</text>
+<text class="l2" x="20" y="96" fill="#d97757" font-weight="600" xml:space="preserve">[factory] Delete-event endpoint — building</text>
+<text class="l3" x="20" y="118" fill="#8b8b94" xml:space="preserve">  Plan: route, handler, tests. Finish line: suite + typecheck pass.</text>
+<text class="l4" x="20" y="140" fill="#8b8b94" xml:space="preserve">  ... implements it, tests pass ...</text>
+<text class="l6" x="20" y="184" fill="#d97757" font-weight="600" xml:space="preserve">[factory] Delete-event endpoint — in-review</text>
+<text class="l7" x="20" y="206" fill="#e5c07b" xml:space="preserve">  playbook-reviewer: 3 ways daily totals go wrong</text>
+<text class="l8" x="20" y="228" fill="#e5c07b" xml:space="preserve">    - a back-dated event</text>
+<text class="l9" x="20" y="250" fill="#e5c07b" xml:space="preserve">    - a delete racing the nightly rollup</text>
+<text class="l10" x="20" y="272" fill="#e5c07b" xml:space="preserve">    - two concurrent deletes</text>
+<text class="l11" x="20" y="294" fill="#8b8b94" xml:space="preserve">  ... fixes all three, adds tests, re-runs the suite ...</text>
+<text class="l13" x="20" y="338" fill="#d97757" font-weight="600" xml:space="preserve">[factory] Delete-event endpoint — pr-open</text>
+<text class="l14" x="20" y="360" fill="#98c379" xml:space="preserve">  Verified: test suite and typecheck pass.</text>
+<text class="l15" x="20" y="382" fill="#e6e6e6" xml:space="preserve">  Decisions:</text>
+<text class="l16" x="20" y="404" fill="#e6e6e6" xml:space="preserve">  - Read-only API tokens can now delete data. That&#x27;s your call:</text>
+<text class="l17" x="20" y="426" fill="#e6e6e6" xml:space="preserve">    should DELETE need a write token?</text>
+</svg>
