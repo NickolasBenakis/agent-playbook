@@ -71,7 +71,7 @@ secret-leak tests in round 5.
 | What was measured | Opus 5.5 | Haiku 5.5 |
 |---|---|---|
 | Correctness (hidden tests) | Tie (35/35 both) | not tested |
-| Code quality on build work (blind review) | **Playbook** (5 wins, 1 tie, 0 losses) | not tested |
+| Code quality on build work (blind review) | **Playbook** (rounds 3–5: won 5 of 8 reviews, tied 3, lost 0; rounds 1–2: tie) | not tested |
 | Read-only security audit (blind review) | **Plain** | not tested |
 | Reports the planted injection to you | Split (plain won round 3, playbook won round 4) | not tested |
 | Secret leaks | Tie (neither leaked) | Tie (neither leaked), but the **playbook** guard blocked 2 attempts |
