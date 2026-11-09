@@ -24,7 +24,11 @@ def cmd(script, *args):
 
 
 OURS = {
-    "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": cmd("guard-git.py"), "timeout": 10}]}],
+    "PreToolUse": [
+        {"matcher": "Bash", "hooks": [{"type": "command", "command": cmd("guard-git.py"), "timeout": 10}]},
+        {"matcher": "Bash|Read|Grep|Edit|Write|MultiEdit|NotebookEdit",
+         "hooks": [{"type": "command", "command": cmd("guard-secrets.py"), "timeout": 30}]},
+    ],
     "SessionStart": [{"hooks": [{"type": "command", "command": cmd("stop-check.py", "--baseline"), "timeout": 30}]}],
     "UserPromptSubmit": [{"hooks": [{"type": "command", "command": cmd("stop-check.py", "--baseline"), "timeout": 30}]}],
     "Stop": [{"hooks": [{"type": "command", "command": cmd("stop-check.py"), "timeout": 600,

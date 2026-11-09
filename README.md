@@ -18,11 +18,11 @@ Interactive overview: [docs/playbook.html](docs/playbook.html). In bb, ask an ag
 ## Layout
 
 ```
-AGENTS.md                 8 short rules every agent gets
+AGENTS.md                 9 short rules every agent gets
 profiles/<name>.md        per-context additions (personal, work)
 profiles/<name>.local.md  private overlay, gitignored (secrets-free notes only)
-skills/                   triage, fanout, factory, oneshot, audit
-agents/                   playbook-reviewer: read-only, spec-anchored reviewer
+skills/                   triage, fanout, factory, oneshot, delegate, audit
+agents/                   playbook-reviewer: read-only reviewer (spec, bugs, security)
 hooks/                    Claude Code hooks that enforce the hard rules
 automations/              factory-sweep: bb automation that unblocks threads
 install.sh                links everything into bb / Claude Code / Codex
@@ -43,7 +43,7 @@ This:
 - symlinks each skill into `~/.agents/skills` and `~/.claude/skills`
   (bb picks skills up from there too)
 - symlinks `agents/*.md` into `~/.claude/agents`
-- adds two hooks to `~/.claude/settings.json`, keeping everything else there
+- adds its hooks to `~/.claude/settings.json`, keeping everything else there
   (`PLAYBOOK_NO_HOOKS=1 ./install.sh <profile>` skips or removes them)
 
 Existing files are backed up as `*.pre-playbook.bak`. `./install.sh --uninstall`
@@ -68,13 +68,25 @@ Rules that must hold every time are hooks, not prose (Claude Code only; other
 agents rely on the `AGENTS.md` text). They guard against mistakes, not
 against a determined agent:
 
+- `hooks/guard-secrets.py` keeps secret values out of the transcript, the
+  code and git history. It denies reading or printing secret files and
+  credentials (`.env*`, keys, `~/.ssh`, `~/.aws/credentials`, `printenv`,
+  `echo $API_KEY`, `gh auth token`, `curl -d @.env`), writing a credential
+  into code, and a `git commit` or `git push` that would publish one. Using
+  secrets without printing them (`source .env`, `--env-file`) passes, and
+  `cut -d= -f1 .env` lists the names. It asks before `curl ... | sh`. Each
+  denial tells the agent what to do instead, so it doesn't need you.
 - `hooks/guard-git.py` asks you before a push to the default branch, a force
-  push (`--force-with-lease` is allowed) or `gh pr merge`.
-- `hooks/stop-check.py` won't let the agent finish a turn in which it changed
-  files while the repo's check fails (up to 3 attempts, then it lets the agent
-  stop and report red). Opt in per repo:
-  `git config playbook.check "npm test && npx tsc --noEmit"`. Local git
-  config is never cloned, so a repo can't make you run its own command.
+  push (`--force-with-lease` is allowed), `gh pr merge`, and commands that
+  throw away uncommitted work (`reset --hard`, `checkout .`, `clean -x`).
+- `hooks/stop-check.py` won't let the agent finish unverified work. By
+  default it reads the transcript: if code changed after the last test,
+  typecheck, build or run, it asks the agent once to verify or to say why it
+  can't. To have it run your checks itself, opt in per repo:
+  `git config playbook.check "npm test && npx tsc --noEmit"`; then a failing
+  check blocks the stop (up to 3 attempts, then the agent reports red).
+  Local git config is never cloned, so a repo can't make you run its own
+  command.
 
 Tests: `python3 -m unittest discover -s tests`.
 

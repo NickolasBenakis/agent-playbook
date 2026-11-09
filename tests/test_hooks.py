@@ -70,6 +70,8 @@ class GuardGit(unittest.TestCase):
             ("gh pr create --title x --body y", feature),
             ("git log --grep 'push origin main'", feature),
             ("git merge main", feature),
+            ("git commit -m \"$(cat <<'EOF'\nNever git push --force origin main\ngh pr merge later\nEOF\n)\"", feature),
+            ("echo 'a; git push origin main'", feature),
         ]:
             with self.subTest(cmd=cmd):
                 self.assertIsNone(self.decision(cmd, cwd))
@@ -150,7 +152,7 @@ class Settings(unittest.TestCase):
         self.assertTrue(os.path.islink(link))
         with open(real) as f:
             s = json.load(f)
-        self.assertEqual(len(s["hooks"]["PreToolUse"]), 2)
+        self.assertEqual(len(s["hooks"]["PreToolUse"]), 3)  # theirs + guard-git + guard-secrets
         self.assertIn("/moved/agent-playbook/hooks/guard-git.py", s["hooks"]["PreToolUse"][1]["hooks"][0]["command"])
         for event in ("Stop", "SessionStart", "UserPromptSubmit"):
             self.assertEqual(len(s["hooks"][event]), 1)
@@ -187,3 +189,83 @@ class Summarize(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def transcript(*events):
+    """events: ("prompt", text) | ("edit", path) | ("bash", command)"""
+    path = os.path.join(tempfile.mkdtemp(), "t.jsonl")
+    with open(path, "w") as f:
+        for kind, value in events:
+            if kind == "prompt":
+                e = {"type": "user", "message": {"role": "user", "content": value}}
+            elif kind == "edit":
+                e = {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Edit", "input": {"file_path": value}}]}}
+            else:
+                e = {"type": "assistant", "message": {"content": [{"type": "tool_use", "name": "Bash", "input": {"command": value}}]}}
+            f.write(json.dumps(e) + "\n")
+    return path
+
+
+class VerificationGate(unittest.TestCase):
+    def stop(self, path, session=None):
+        return run(STOP, {"session_id": session or os.path.basename(os.path.dirname(path)), "cwd": tempfile.mkdtemp(),
+                          "transcript_path": path})
+
+    def test_blocks_unverified_code_edits(self):
+        out = self.stop(transcript(("prompt", "fix it"), ("bash", "npm test"), ("edit", "/r/src/a.ts")))
+        self.assertEqual(out["decision"], "block")
+        self.assertIn("a.ts", out["reason"])
+
+    def test_passes_when_verified_or_not_code(self):
+        for events in [
+            [("prompt", "fix"), ("edit", "/r/src/a.ts"), ("bash", "npx vitest run")],
+            [("prompt", "fix"), ("edit", "/r/src/a.ts"), ("bash", "npx tsc --noEmit")],
+            [("prompt", "fix"), ("edit", "/r/tool.py"), ("bash", "python3 tool.py --help")],
+            [("prompt", "docs"), ("edit", "/r/README.md")],
+            [("prompt", "old"), ("edit", "/r/a.ts"), ("prompt", "just a question")],
+            [("prompt", "what is this?"), ("bash", "ls")],
+            [("prompt", "cfg"), ("edit", "/r/package.json"), ("edit", "/r/Dockerfile"), ("edit", "/r/.gitignore")],
+        ]:
+            with self.subTest(events=events):
+                self.assertIsNone(self.stop(transcript(*events)))
+
+    def test_reading_or_git_is_not_verification(self):
+        for cmd in ["ls tests", "cat test-utils.ts", "git push origin main", "git diff"]:
+            with self.subTest(cmd=cmd):
+                out = self.stop(transcript(("prompt", "x"), ("edit", "/r/main.ts"), ("bash", cmd)))
+                self.assertEqual(out and out["decision"], "block")
+
+    def test_asks_only_once_per_turn(self):
+        path = transcript(("prompt", "x"), ("edit", "/r/a.ts"))
+        self.assertEqual(self.stop(path)["decision"], "block")
+        self.assertIsNone(self.stop(path))
+
+    def test_survives_a_corrupt_line(self):
+        path = transcript(("prompt", "x"), ("edit", "/r/a.ts"))
+        with open(path, "a") as f:
+            f.write("{not json\n")
+        self.assertEqual(self.stop(path)["decision"], "block")
+
+
+class GuardGitDestructive(unittest.TestCase):
+    def decision(self, command, cwd):
+        out = run(GUARD, {"tool_name": "Bash", "tool_input": {"command": command}, "cwd": cwd})
+        return out and out["hookSpecificOutput"]["permissionDecision"]
+
+    def test_asks_before_discarding_work_only_when_dirty(self):
+        repo = git_repo("feature")
+        with open(os.path.join(repo, "a.txt"), "w") as f:
+            f.write("1")
+        subprocess.run(["git", "-C", repo, "add", "a.txt"], check=True)
+        subprocess.run(["git", "-C", repo, "commit", "-qm", "a"], check=True)
+        for cmd in ["git reset --hard", "git checkout .", "git restore ."]:
+            self.assertIsNone(self.decision(cmd, repo), cmd)  # clean tree: nothing to lose
+        with open(os.path.join(repo, "a.txt"), "w") as f:
+            f.write("2")
+        for cmd in ["git reset --hard", "git reset --hard HEAD~1", "git checkout .", "git restore ."]:
+            self.assertEqual(self.decision(cmd, repo), "ask", cmd)
+        self.assertEqual(self.decision("git clean -fdx", repo), "ask")
+        self.assertEqual(self.decision("git clean -fdX", repo), "ask")
+        self.assertEqual(self.decision("git restore --staged --worktree .", repo), "ask")
+        self.assertIsNone(self.decision("git clean -fd", repo))
+        self.assertIsNone(self.decision("git restore --staged .", repo))

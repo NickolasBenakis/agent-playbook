@@ -3,7 +3,9 @@
 
 Asks the human before commands the playbook says need explicit permission:
 pushing to the default branch, force-pushing (other than --force-with-lease),
-and merging a PR with `gh pr merge`. Everything else passes silently.
+merging a PR with `gh pr merge`, and commands that destroy uncommitted work
+(`reset --hard`, `checkout .`/`restore .` on a dirty tree, `clean -x`).
+Everything else passes silently.
 Asking (not denying) keeps the human in charge: one click approves it.
 
 This is a guard against mistakes, not a security boundary: a determined
@@ -11,13 +13,10 @@ command can always hide a push (scripts, aliases, eval).
 """
 import json
 import os
-import re
-import shlex
 import subprocess
 import sys
 
-WRAPPERS = {"sudo", "command", "exec", "nohup", "time", "env", "nice", "timeout", "xargs"}
-SHELLS = {"bash", "sh", "zsh", "dash"}
+from shellwords import walk
 
 
 def git_out(cwd, *args):
@@ -33,33 +32,6 @@ def default_branches(cwd):
     if ref:
         names.add(ref.rsplit("/", 1)[-1])
     return names
-
-
-def segments(command):
-    """Split a command line into simple commands on ; && || | & and newlines."""
-    for part in re.split(r"&&|\|\||[;|&\n]", command):
-        try:
-            words = shlex.split(part, comments=True)
-        except ValueError:
-            words = part.split()
-        if words:
-            yield words
-
-
-def unwrap(words):
-    """Drop env assignments and wrappers like sudo, timeout 60, env X=1, nice -n 5."""
-    while words:
-        w = words[0]
-        if re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", w):
-            words = words[1:]
-        elif os.path.basename(w) in WRAPPERS:
-            words = words[1:]
-            while words and (words[0].startswith("-") or re.match(r"^\d+[smhd]?$", words[0])
-                             or re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", words[0])):
-                words = words[1:]
-        else:
-            break
-    return words
 
 
 def check_push(args, cwd):
@@ -84,16 +56,12 @@ def check_push(args, cwd):
     return None
 
 
-def check(words, cwd, depth=0):
-    words = unwrap(words)
-    if not words:
-        return None
+def dirty(cwd):
+    return bool(git_out(cwd, "status", "--porcelain", "--untracked-files=no"))
+
+
+def check(words, cwd):
     prog = os.path.basename(words[0])
-    if prog in SHELLS and depth < 3:
-        for i, w in enumerate(words[1:-1], 1):
-            if w.startswith("-") and "c" in w:
-                return scan(words[i + 1], cwd, depth + 1)
-        return None
     if prog == "gh":
         rest = [w for w in words[1:] if not w.startswith("-")]
         # drop values of global flags like -R owner/repo
@@ -113,19 +81,17 @@ def check(words, cwd, depth=0):
             i += 2
         else:
             i += 1
-    if i < len(words) and words[i] == "push":
-        return check_push(words[i + 1:], git_cwd)
-    return None
-
-
-def scan(command, cwd, depth=0):
-    for words in segments(command):
-        if words[0] in ("cd", "pushd") and len(words) > 1:
-            cwd = os.path.join(cwd, os.path.expanduser(words[1]))
-            continue
-        reason = check(words, cwd, depth)
-        if reason:
-            return reason
+    sub, args = (words[i], words[i + 1:]) if i < len(words) else (None, [])
+    if sub == "push":
+        return check_push(args, git_cwd)
+    if sub == "reset" and "--hard" in args and dirty(git_cwd):
+        return "discards uncommitted changes (reset --hard on a dirty tree)"
+    if sub == "clean" and any(a.startswith("-") and not a.startswith("--") and "x" in a.lower() for a in args) \
+            and not any(a in ("-n", "--dry-run") for a in args):
+        return "deletes ignored files such as .env (git clean -x)"
+    if sub in ("checkout", "restore") and args[-1:] == ["."] and dirty(git_cwd) \
+            and (sub == "checkout" or not {"--staged", "-S"} & set(args) or {"--worktree", "-W"} & set(args)):
+        return "discards uncommitted changes"
     return None
 
 
@@ -134,9 +100,9 @@ def main():
     if not isinstance(data, dict) or not isinstance(data.get("tool_input"), dict):
         return
     command = data["tool_input"].get("command")
-    if not isinstance(command, str) or ("push" not in command and "merge" not in command):
+    if not isinstance(command, str) or not any(w in command for w in ("push", "merge", "reset", "clean", "checkout", "restore")):
         return
-    reason = scan(command, str(data.get("cwd") or os.getcwd()))
+    reason = walk(command, str(data.get("cwd") or os.getcwd()), check)
     if reason:
         print(json.dumps({
             "hookSpecificOutput": {

@@ -41,7 +41,8 @@ Keep the title as `[factory] <task> — <state>`, where state is one of
 4. **in-review**: before any human sees it, get an independent review: the
    `playbook-reviewer` subagent (give it the acceptance criteria and a diff
    file: `git diff <base>...HEAD > "$TMPDIR/review.diff"`), `/code-review`, or
-   a fresh subagent with only the diff and the criteria. Fix confirmed
+   a fresh subagent with only the diff and the criteria. It covers security
+   when the change touches auth, input, money or stored data. Fix confirmed
    findings; log rejected ones in the Decision Log.
 5. **ci**: run the repo's test/lint/typecheck locally, push the branch, open a
    draft PR, and watch CI. On red: read the failing log, fix, push again. After
@@ -52,14 +53,13 @@ Keep the title as `[factory] <task> — <state>`, where state is one of
 
 ## Parallel work
 
-Run tasks in parallel only for 5+ independent tasks, tasks over ~30 minutes,
-or when the human is away or asked for it. On 3 well-specified tasks,
-parallel child threads cost ~2.4x the tokens and saved no time.
+Run tasks in parallel only when AGENTS.md rule 6 says it's faster. On 3
+well-specified tasks, parallel child threads cost ~2.4x the tokens and saved
+no time.
 
-A child starts with none of your context. Its brief must include the goal and
-finish line, the branch to base on, the existing code to reuse (helpers,
-tables, patterns, test setup) and conventions to follow, and the instruction
-to keep the record sections above.
+A child starts with none of your context. Write its brief with the `delegate`
+skill, and add the branch to base on and the instruction to keep the record
+sections above.
 
 In bb, one child thread per task:
 

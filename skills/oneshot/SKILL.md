@@ -22,7 +22,8 @@ to start this and forget it until the result is ready.
 4. **Large mechanical work** (ports, migrations, codemods): build a small
    harness instead of brute-forcing it:
    - enumerate units of work in dependency order (e.g. walk the import graph)
-   - hand each unit to a subagent with a self-contained brief
+   - hand each unit to a subagent with a brief written with the `delegate`
+     skill
    - a check that fails if the new side falls behind the old (counts,
      parity tests)
 5. **Review before reporting**: low attention means the human won't catch what

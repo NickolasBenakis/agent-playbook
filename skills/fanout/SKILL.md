@@ -12,18 +12,13 @@ into subagents.
 ## How to run it
 
 1. As the human dumps work ("this is broken", "add X", "make Y faster"), turn
-   each into a self-contained brief:
-   - goal and acceptance criteria
-   - relevant files, commands, and what's already ruled out
-   - existing code to reuse and conventions to follow (the subagent starts
-     with none of your context)
-   - "report every interpretation, cap or fallback under Decisions"
-   - branch name `fanout/<short-slug>`
-   - finish line: tests/typecheck pass, PR opened (or diff ready if no remote)
+   each into a self-contained brief with the `delegate` skill, plus the
+   branch name `fanout/<short-slug>` and the finish line: tests/typecheck
+   pass, PR opened (or diff ready if no remote).
 2. Launch one subagent per independent item, in an isolated worktree when the
-   tool supports it. Run several at once only when AGENTS.md rule 6 allows
-   it (5+ independent items, long items, or the human asked); otherwise one
-   at a time, and a single small item can just be done.
+   tool supports it. Run several at once only when AGENTS.md rule 6 says
+   it's faster; otherwise one at a time, and a single small item can just be
+   done.
    Items that touch the same files go to one subagent, sequentially.
 3. Keep a running board in your replies, updated whenever it changes:
 
