@@ -47,6 +47,13 @@ apply immediately.
 Install is per machine and per OS user, not per account: switching Claude/Codex
 accounts (or rotating them with `bb pool`) keeps the same playbook.
 
+## Does it help?
+
+On well-specified tasks, a strong model alone matched the playbook on quality
+and speed at lower token cost. The playbook's value is legibility: status,
+surfaced decisions, follow-ups and an independent review. Results and what's
+not yet measured: [docs/benchmarks.md](docs/benchmarks.md).
+
 ## Factory sweep (optional)
 
 A scheduled bb agent that nudges `[factory]`/`[fanout]` threads with red CI,

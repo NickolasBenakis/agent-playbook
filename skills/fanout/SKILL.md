@@ -15,10 +15,14 @@ into subagents.
    each into a self-contained brief:
    - goal and acceptance criteria
    - relevant files, commands, and what's already ruled out
+   - existing code to reuse and conventions to follow (the subagent starts
+     with none of your context)
+   - "report every interpretation, cap or fallback under Decisions"
    - branch name `fanout/<short-slug>`
    - finish line: tests/typecheck pass, PR opened (or diff ready if no remote)
-2. Launch one subagent per independent item, in parallel, in an isolated
-   worktree when the tool supports it. Items that touch the same files go to
+2. Launch one subagent per independent item, in an isolated worktree when the
+   tool supports it. Run them in parallel when the human is actively feeding
+   work or there are several items; a single small item can just be done. Items that touch the same files go to
    one subagent, sequentially.
 3. Keep a running board in your replies, updated whenever it changes:
 
