@@ -18,10 +18,12 @@ measuring it, one real session at a time.
   for usage; Claude Code threads also have a `.jsonl` as above.
 - **Codex**: `~/.codex/sessions/`.
 
-Don't read raw transcripts whole. For Claude Code, start with:
+Don't read raw transcripts whole. For Claude Code, start with the
+`summarize.py` script that sits next to this file (this skill's base
+directory; `~/.claude/skills/audit/` after `install.sh`):
 
 ```sh
-python3 ~/.claude/skills/audit/summarize.py <session.jsonl> [...]
+python3 <this skill's directory>/summarize.py <session.jsonl> [...]
 ```
 
 It prints duration, tokens, tool calls, skills, subagents, child threads,
