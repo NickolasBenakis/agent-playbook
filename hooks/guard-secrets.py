@@ -167,15 +167,21 @@ def read_paths(words, cwd):
 # secrets is allowed only when it prints names or counts.
 NAMES_ONLY = {"grep": "lLcq", "egrep": "lLcq", "fgrep": "lLcq", "rg": "lcq", "ag": "lc", "ack": "lc"}
 NAMES_ONLY_LONG = {"--files-with-matches", "--files-without-match", "--count", "--quiet", "--silent"}
-VALUE_OPTS = {"-e", "-f", "-m", "-A", "-B", "-C", "-d", "-D", "-r", "-E", "-g", "-t", "-T", "-j", "-M", "-G",
-              "--regexp", "--file", "--replace", "--glob", "--iglob", "--type", "--encoding", "--max-count"}
+# Options that take the next word as their value, per program (grep's -E/-r are flags; rg's take values).
+_GREP_VALUES = {"-e", "-f", "-m", "-A", "-B", "-C", "-d", "-D", "--regexp", "--file", "--max-count"}
+VALUE_OPTS = {"grep": _GREP_VALUES, "egrep": _GREP_VALUES, "fgrep": _GREP_VALUES,
+              "rg": {"-e", "-f", "-m", "-A", "-B", "-C", "-r", "-E", "-g", "-t", "-T", "-j", "-M", "--regexp", "--file",
+                     "--replace", "--glob", "--iglob", "--type", "--type-not", "--encoding", "--max-count"},
+              "ag": {"-A", "-B", "-C", "-m", "-G", "-g", "--file-search-regex", "--ignore"},
+              "ack": {"-A", "-B", "-C", "-m", "--type", "--match"}}
 MAX_WALK_FILES = 100_000
 
 
 def names_only(prog, args):
     letters = set(NAMES_ONLY.get(prog, ""))
+    values = VALUE_OPTS.get(prog, set())
     for i, a in enumerate(args):
-        if i and args[i - 1] in VALUE_OPTS:
+        if i and args[i - 1] in values:
             continue  # the value of -e, -r, ... not an option
         if a in NAMES_ONLY_LONG or (re.fullmatch(r"-[A-Za-z]+", a) and set(a[1:]) & letters):
             return True
@@ -189,8 +195,12 @@ def searches_recursively(prog, args):
         return any(re.fullmatch(r"-[A-Za-z]*[rR][A-Za-z]*|--recursive|--dereference-recursive|--directories=recurse", a)
                    for a in args) or any(a == "-d" and args[i + 1:i + 2] == ["recurse"] for i, a in enumerate(args))
     if prog == "rg":  # skips hidden and gitignored files unless told otherwise
-        return any(re.fullmatch(r"-[A-Za-z.]*[u.][A-Za-z.]*|--hidden|--no-ignore.*|-g|--glob.*|--iglob.*|-[A-Za-z]*g", a)
-                   for a in args)
+        if any(re.fullmatch(r"-[A-Za-z.]*[u.][A-Za-z.]*|--hidden|--no-ignore.*", a) for a in args):
+            return True
+        # a positive --glob/-g can pull in ignored files; a negated one ('!x') only excludes
+        globs = [args[i + 1] for i, a in enumerate(args[:-1]) if a in ("-g", "--glob", "--iglob")]
+        globs += [a.split("=", 1)[1] for a in args if a.startswith(("--glob=", "--iglob="))]
+        return any(not g.startswith("!") for g in globs)
     if prog == "ag":
         return any(re.fullmatch(r"-[A-Za-z]*[uU][A-Za-z]*|--hidden|--unrestricted|--skip-vcs-ignores|--all-types|-a", a)
                    for a in args)
@@ -227,7 +237,8 @@ def recursive_grep_leak(prog, args, cwd):
     """A file holding secrets that this recursive search would print lines from, or None."""
     if not searches_recursively(prog, args) or names_only(prog, args):
         return None
-    plain = [a for i, a in enumerate(args) if not a.startswith("-") and not (i and args[i - 1] in VALUE_OPTS)]
+    values = VALUE_OPTS.get(prog, set())
+    plain = [a for i, a in enumerate(args) if not a.startswith("-") and not (i and args[i - 1] in values)]
     paths = [x for p in plain[1:] for x in expand(p, cwd)]
     # No path means the current directory; named files are checked by the caller like any read.
     tops = [p for p in paths if os.path.isdir(os.path.join(cwd, os.path.expanduser(p)))] if paths else ["."]
@@ -284,7 +295,9 @@ def check_bash(words, cwd):
         while i < len(words) and words[i].startswith("-"):
             i += 2 if words[i] in ("-C", "-c") else 1
         gsub, gargs = (words[i], words[i + 1:]) if i < len(words) else ("", [])
-        if gsub in ("show", "diff", "log", "blame", "cat-file", "grep"):
+        prints_content = gsub in ("show", "diff", "blame", "cat-file", "grep") or (
+            gsub == "log" and any(a in ("-p", "--patch", "-u", "--full-diff") or a.startswith("-L") for a in gargs))
+        if prints_content:
             for a in gargs:
                 path = a.split(":", 1)[1] if ":" in a and not a.startswith("-") else a
                 if not a.startswith("-") and is_secret_path(path):

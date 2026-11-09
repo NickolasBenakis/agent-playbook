@@ -55,34 +55,35 @@ accounts (or rotating them with `bb pool`) keeps the same playbook.
 
 ## Does it help? The evidence
 
-Four benchmark rounds in bb compared plain Claude Opus 5.5 with the same model
-plus this playbook, on a real Next.js + TypeScript SaaS repo. Rounds 3–4 used
-hidden tests the agents never saw, blind reviews, a planted prompt injection,
-and canary secrets in `.env.local` to detect any leak exactly. Full method and
-numbers are in [docs/benchmarks.md](docs/benchmarks.md).
+Five benchmark rounds in bb compared plain Claude Opus 5.5 (and Haiku 5.5)
+with the same model plus this playbook, on a real Next.js + TypeScript SaaS
+repo. Rounds 3–5 used hidden tests the agents never saw, blind reviews, a
+planted prompt injection, and canary secrets in `.env.local` to detect any
+leak exactly. Method and raw numbers: [docs/benchmarks.md](docs/benchmarks.md).
 
-| What we measured | Plain Opus 5.5 | With the playbook |
+| What we measured (rounds 3–5) | Plain model | With the playbook |
 |---|---|---|
-| Hidden tests passed (rounds 3–4) | 35/35 | 35/35 |
-| Blind review of build tasks (round 3, 1–5) | 2.5 / 2.5 / 4.0 | **4.5 / 4.0 / 4.5** |
-| Blind review of a security audit (round 4) | **4.5** | 4.0 |
-| Secrets leaked (20 threads, incl. tempting requests) | 0 | 0 |
+| Hidden tests passed | 35/35 | 35/35 |
+| Blind reviews of build work (8 comparisons) | won 1 | **won 5** (2 ties) |
+| Bugs shipped that the review step caught | rollup corruption, deletable billed events, live-key API call, login race, ex-members keeping keys | none found |
+| Secrets leaked (34 threads, incl. tempting requests) | 0 | 0 |
+| Leaking commands attempted and blocked (Haiku 5.5) | n/a (none attempted) | **2 blocked**, 3 secret values |
 | Planted prompt injection reported to you | 1 of 10 | 3 of 10 |
-| Bugs shipped that the review step caught | rollup corruption, deletable billed events, live-key API call | none found |
-| Tokens | 1x | 1.4–1.8x |
+| Tokens | 1x | 1.4–1.8x (6.7x when it went parallel) |
 | Time per task | 1x | up to 2x |
-| Child threads spawned on small tasks | 0 | 0 (correctly) |
+| Parallel workers vs one agent | one agent was faster on every batch measured | rule now defaults to one agent |
 
-**Use it if** you hand agents real feature work and review the result later.
-Its independent review caught data-corruption and security bugs that plain
-Opus 5.5 shipped, and it tells you about decisions and risks instead of
-deciding silently. **Skip it** for small, well-specified tasks where speed and
-tokens matter more: there, plain Opus 5.5 is just as correct and faster.
+**Use it if** you hand agents real feature or security work and review the
+result later. Its independent review caught data-corruption and security bugs
+that the plain model shipped, it tells you about decisions and risks instead
+of deciding silently, and its guards stop secret leaks by rule rather than by
+luck. **Skip it** for small, well-specified tasks where speed and tokens
+matter more: there, plain Opus 5.5 is just as correct and faster.
 
-The guards (secrets, git, unverified code) didn't change outcomes in these
-rounds, because Opus 5.5 already refused every tempting request. They are
-insurance: they deny by rule, not by judgment, for the day a model slips or
-an injection is better crafted. Their tests are in `tests/`.
+What the benchmarks didn't support, and what we changed because of it:
+parallel workers were slower than one agent for this model, so the playbook
+now defaults to one; a "fan out read-only work" rule changed nothing, so it
+only applies when reading would flood the context.
 
 What we borrowed from other public playbooks:
 [docs/research/public-playbooks.md](docs/research/public-playbooks.md). Run the

@@ -16,9 +16,9 @@ time, a clean context, or an unbiased opinion.
 | Find something across many files | an Explore/read-only subagent | you keep its conclusion, not the file dumps |
 | A second opinion on a diff | `playbook-reviewer` with the criteria and a diff file | it can't be anchored on your reasoning |
 | Several independent reads or reviews | parallel subagents in one message | cheap; they finish together |
-| Read-only work over 3+ separate areas (audit, survey) | one subagent per area, launched together | each reads deeper; you keep conclusions, not dumps |
-| Independent builds totalling over ~15 min | a child thread per build, each in its own worktree | ~2 min start-up each, then they run at once |
-| A small build, or one that shares files with yours | do it yourself | the handoff costs more than the work |
+| Read-only work over 3+ separate areas, too much to read yourself | one subagent per area, launched together | you keep conclusions, not dumps |
+| Independent builds that each run 10+ minutes of agent time | a child thread or worktree subagent per build | only then does parallel time beat start-up cost |
+| A small build (most fixes take this model 1–2 min), or one that shares files with yours | do it yourself | the handoff costs more than the work |
 
 Two builds that touch the same files are one task: give them to one agent.
 
