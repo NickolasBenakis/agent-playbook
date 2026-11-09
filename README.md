@@ -55,11 +55,15 @@ accounts (or rotating them with `bb pool`) keeps the same playbook.
 
 ## Does it help?
 
-On well-specified tasks, a strong model alone matched the playbook on quality
-and speed at lower token cost. The playbook's value is legibility: status,
-surfaced decisions, follow-ups and an independent review. Results and what's
-not yet measured: [docs/benchmarks.md](docs/benchmarks.md). What we borrowed
-from other public playbooks, and why: [docs/research/public-playbooks.md](docs/research/public-playbooks.md).
+On well-specified tasks, plain Opus 5.5 and the playbook both pass every
+hidden test, and neither leaks secrets. The playbook's work is better on what
+tests don't catch: in round 3's blind reviews it won all three comparisons
+(4.5 vs 2.5, 4.0 vs 2.5, 4.5 vs 4.0), mostly because its review step caught
+data-corruption and security bugs the plain model shipped. It costs about
+1.8x the tokens and up to twice the time on larger tasks. Its guards are a
+deterministic backstop for secrets and destructive git commands. Details and
+caveats: [docs/benchmarks.md](docs/benchmarks.md). What we borrowed from
+other public playbooks: [docs/research/public-playbooks.md](docs/research/public-playbooks.md).
 Run the `audit` skill on your own sessions to keep measuring it.
 
 ## Hooks

@@ -21,6 +21,7 @@ Denying (not asking) keeps the human out of the loop: the reason tells the
 agent what to do instead. This is a guard against accidents and prompt
 injection, not a sandbox: a determined command can always get around it.
 """
+import fnmatch
 import glob
 import json
 import os
@@ -161,23 +162,89 @@ def read_paths(words, cwd):
     return out
 
 
+# Search tools. We don't try to predict which lines a pattern matches (grep,
+# rg and Python regexes differ too much); a search that reaches a file holding
+# secrets is allowed only when it prints names or counts.
+NAMES_ONLY = {"grep": "lLcq", "egrep": "lLcq", "fgrep": "lLcq", "rg": "lcq", "ag": "lc", "ack": "lc"}
+NAMES_ONLY_LONG = {"--files-with-matches", "--files-without-match", "--count", "--quiet", "--silent"}
+VALUE_OPTS = {"-e", "-f", "-m", "-A", "-B", "-C", "-d", "-D", "-r", "-E", "-g", "-t", "-T", "-j", "-M", "-G",
+              "--regexp", "--file", "--replace", "--glob", "--iglob", "--type", "--encoding", "--max-count"}
+MAX_WALK_FILES = 100_000
+
+
+def names_only(prog, args):
+    letters = set(NAMES_ONLY.get(prog, ""))
+    for i, a in enumerate(args):
+        if i and args[i - 1] in VALUE_OPTS:
+            continue  # the value of -e, -r, ... not an option
+        if a in NAMES_ONLY_LONG or (re.fullmatch(r"-[A-Za-z]+", a) and set(a[1:]) & letters):
+            return True
+    return False
+
+
+def searches_recursively(prog, args):
+    if prog == "ack":
+        return True  # recursive by default and ignores .gitignore
+    if prog in ("grep", "egrep", "fgrep"):
+        return any(re.fullmatch(r"-[A-Za-z]*[rR][A-Za-z]*|--recursive|--dereference-recursive|--directories=recurse", a)
+                   for a in args) or any(a == "-d" and args[i + 1:i + 2] == ["recurse"] for i, a in enumerate(args))
+    if prog == "rg":  # skips hidden and gitignored files unless told otherwise
+        return any(re.fullmatch(r"-[A-Za-z.]*[u.][A-Za-z.]*|--hidden|--no-ignore.*|-g|--glob.*|--iglob.*|-[A-Za-z]*g", a)
+                   for a in args)
+    if prog == "ag":
+        return any(re.fullmatch(r"-[A-Za-z]*[uU][A-Za-z]*|--hidden|--unrestricted|--skip-vcs-ignores|--all-types|-a", a)
+                   for a in args)
+    return False
+
+
+SAFE_GLOB = re.compile(r"[A-Za-z0-9_.*-]+")
+
+
+def excluded(name, args):
+    """Only grep's plain --exclude=<glob> without any --include (where the last
+    match wins) is honoured, and only for globs fnmatch reads the same way."""
+    if any(a.startswith("--include") for a in args):
+        return False
+    pats = [a.split("=", 1)[1] for a in args if a.startswith("--exclude=")]
+    return any(SAFE_GLOB.fullmatch(p) and fnmatch.fnmatch(name, p) for p in pats)
+
+
+def only_includes_extensions(name, args):
+    """`--include='*.ts'` (and nothing else): grep only reads files with those extensions."""
+    incs = []
+    for a in args:
+        if a.startswith("--include="):
+            m = re.fullmatch(r"\*\.\{([A-Za-z0-9,]+)\}", a.split("=", 1)[1])  # bash expands *.{ts,js}
+            incs += [f"*.{e}" for e in m.group(1).split(",")] if m else [a.split("=", 1)[1]]
+    if not incs or any(a.startswith("--exclude=") for a in args):
+        return False
+    if not all(re.fullmatch(r"\*\.[A-Za-z0-9]+", p) for p in incs):
+        return False
+    return not any(fnmatch.fnmatch(name, p) for p in incs)
+
+
 def recursive_grep_leak(prog, args, cwd):
-    """grep -r prints matches from hidden, gitignored files such as .env."""
-    if prog not in ("grep", "egrep", "fgrep") or not any(re.fullmatch(r"-[A-Za-z]*[rR][A-Za-z]*|--recursive|"
-                                                                       r"--dereference-recursive", a) for a in args):
+    """A file holding secrets that this recursive search would print lines from, or None."""
+    if not searches_recursively(prog, args) or names_only(prog, args):
         return None
-    if any(a.startswith("--exclude") and "env" in a for a in args):
-        return None
-    plain = [a for a in args if not a.startswith("-")]
-    for top in (plain[1:] or ["."]):
+    plain = [a for i, a in enumerate(args) if not a.startswith("-") and not (i and args[i - 1] in VALUE_OPTS)]
+    paths = [x for p in plain[1:] for x in expand(p, cwd)]
+    # No path means the current directory; named files are checked by the caller like any read.
+    tops = [p for p in paths if os.path.isdir(os.path.join(cwd, os.path.expanduser(p)))] if paths else ["."]
+    seen = 0
+    for top in tops:
         base = os.path.join(cwd, os.path.expanduser(top))
-        for root, dirs, files in os.walk(base):
-            dirs[:] = [d for d in dirs if d not in ("node_modules", ".git", "vendor", ".venv", "dist", ".next")]
-            if root[len(base):].count(os.sep) >= 2:
-                dirs[:] = []
-            for name in files:
-                if is_secret_path(name) and holds_secrets(os.path.join(root, name)):
-                    return os.path.relpath(os.path.join(root, name), cwd)
+        for root, dirs, names in os.walk(base):
+            dirs[:] = [d for d in dirs if d not in ("node_modules", ".git")]
+            for name in names:
+                seen += 1
+                if seen > MAX_WALK_FILES:
+                    return f"{top} (too many files to check)"
+                full = os.path.join(root, name)
+                if excluded(name, args) or only_includes_extensions(name, args):
+                    continue
+                if is_secret_path(full) and holds_secrets(full):
+                    return os.path.relpath(full, cwd)
     return None
 
 
@@ -226,14 +293,15 @@ def check_bash(words, cwd):
 
     leak = recursive_grep_leak(prog, args, cwd)
     if leak:
-        return deny(f"`grep -r` also searches {leak}, which holds secrets, and would print matching lines. "
-                    "Use `rg` (it skips gitignored files) or add `--exclude='.env*'`.")
+        return deny(f"this search also reads {leak}, which holds secrets, and would print matching lines. "
+                    "Use plain `rg` (it skips gitignored and hidden files), add `--exclude='.env*'`, or list "
+                    "file names only with -l.")
 
     if prog not in READERS:
         return None
     if prog == "cut" and option(args, "-d", "--delimiter") == "=" and option(args, "-f", "--fields") == "1":
         return None  # names only
-    if prog in GREPS and any(re.fullmatch(r"-[A-Za-z]*[qlLc][A-Za-z]*|--quiet|--count|--files-with-matches", a) for a in args):
+    if prog in GREPS and names_only(prog, args):
         return None
     if prog in ("sed", "gsed") and any(a.startswith("-i") or a == "--in-place" for a in args):
         return None

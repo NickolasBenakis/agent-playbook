@@ -69,7 +69,7 @@ TOKEN_PATTERNS = [
     ("Google API key", r"\bAIza[0-9A-Za-z_-]{35}\b"),
     ("npm token", r"\bnpm_[A-Za-z0-9]{36}\b"),
     ("SendGrid key", r"\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b"),
-    ("Private key", r"-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----\s*[A-Za-z0-9+/=]{40,}"),
+    ("Private key", r"-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----(?:\s|\\n)*[A-Za-z0-9+/=]{40,}"),
 ]
 _TOKENS = [(label, re.compile(rx)) for label, rx in TOKEN_PATTERNS]
 _FAKE_TOKEN = re.compile(r"example|x{6,}|0{8,}|fake|dummy", re.I)
@@ -79,7 +79,7 @@ SECRET_NAME = r"[\w.-]*(?:secret|token|passw(?:or)?d|api[_-]?key|private[_-]?key
 _ASSIGN = re.compile(r"(?i)\b(" + SECRET_NAME + r")[\w.-]*[\"']?\s*[:=]\s*[\"']([^\"'\s]{16,})[\"']")
 # KEY=value lines in env files (unquoted values allowed).
 _ENV_LINE = re.compile(r"(?im)^\s*(?:export\s+)?([A-Z0-9_]*(?:SECRET|TOKEN|PASSWORD|PASSWD|API_?KEY|PRIVATE_?KEY|"
-                       r"ACCESS_?KEY|CREDENTIALS?|DSN|DATABASE_URL)[A-Z0-9_]*)\s*=\s*[\"']?([^\s\"'#]{8,})")
+                       r"ACCESS_?KEY|CREDENTIALS?|DSN|DATABASE_URL)[A-Z0-9_]*)[ \t]*=[ \t]*[\"']?([^\s\"'#]{8,})")
 _DB_URL = re.compile(r"\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|rediss?|amqps?)://[^:@\s/]+:([^@\s]{8,})@([^/\s:]+)")
 _PLACEHOLDER = re.compile(r"x{4,}|\*{3,}|your|example|changeme|change-me|placeholder|dummy|fake|sample|redacted|"
                           r"<|>|\$|\{|\}|%s|process\.env|os\.environ|getenv|env\(|\.\.\.|^https?:|://|^/", re.I)
