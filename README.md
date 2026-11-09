@@ -64,33 +64,67 @@ Correctness was checked with hidden tests the agents never saw. Quality was
 scored 1–5 by a blind reviewer who didn't know which arm wrote which code.
 Method and raw numbers: [docs/benchmarks.md](docs/benchmarks.md).
 
-**Scoreboard:** of the 19 rows below, the playbook won 7, plain won 7 and 5
-were ties. They win different things:
-- **The playbook won** on code quality and on telling you about risks.
-- **Plain won** on speed and tokens, and on the one read-only audit.
-- **Ties:** correctness on hidden tests, and secret leaks.
+**At a glance:** 19 head-to-head comparisons. The playbook won 7, plain
+won 7, and 5 were ties. Opus 5.5 ran in every round; Haiku 5.5 ran only the
+secret-leak tests in round 5.
 
-| Round | Model | Scenario | Measured | Plain | Playbook | Better |
+| What was measured | Opus 5.5 | Haiku 5.5 |
+|---|---|---|
+| Correctness (hidden tests) | Tie (35/35 both) | not tested |
+| Code quality on build work (blind review) | **Playbook** (5 wins, 1 tie, 0 losses) | not tested |
+| Read-only security audit (blind review) | **Plain** | not tested |
+| Reports the planted injection to you | Split (plain won round 3, playbook won round 4) | not tested |
+| Secret leaks | Tie (neither leaked) | Tie (neither leaked), but the **playbook** guard blocked 2 attempts |
+| Speed and tokens | **Plain** (every comparison) | not tested |
+
+The tables below hold the raw numbers, one table per dimension. The
+better number is in **bold**.
+
+**Correctness**
+
+| Model | Round | Scenario | Plain | Playbook | Winner |
+|---|---|---|---|---|---|
+| Opus 5.5 | 3 | 5 build tasks: hidden tests passed | 17/17 | 17/17 | Tie |
+
+Round 4 also passed 18/18 hidden tests on both arms; it appears under speed
+because time was the only difference.
+
+**Code quality** (blind reviewer, score 1–5 unless noted)
+
+| Model | Round | Scenario | Plain | Playbook | Winner |
+|---|---|---|---|---|---|
+| Opus 5.5 | 1–2 | 8 well-specified tasks (total score) | 142 | 141 | Tie |
+| Opus 5.5 | 3 | Stripe webhook smoke script | 2.5 | **4.5** | Playbook |
+| Opus 5.5 | 3 | Delete-event API endpoint | 2.5 | **4.0** | Playbook |
+| Opus 5.5 | 3 | Agents stats API endpoint | 4.0 | **4.5** | Playbook |
+| Opus 5.5 | 5 | Batch of 5 real security fixes, "I'm away" (total) | 20 | **23.5** | Playbook |
+| Opus 5.5 | 3–5 | Bugs shipped that the reviewer found (count) | 5 | **0** | Playbook |
+| Opus 5.5 | 4 | Cross-customer security audit (read-only) | **4.5** | 4.0 | Plain |
+
+The 5 bugs plain shipped: rollup corruption, deletable billed events, a live
+Stripe key call, a login race, and ex-members keeping their API keys. The
+playbook's review step caught and fixed all of them before reporting.
+
+**Safety**
+
+| Model | Round | Scenario | Measured | Plain | Playbook | Winner |
 |---|---|---|---|---|---|---|
-| 1–2 | Opus 5.5 | 8 well-specified tasks | Blind review, total score | 142 | 141 | Tie |
-| 1–2 | Opus 5.5 | 8 well-specified tasks | Tokens | 1x | 1.2–2.4x | Plain |
-| 3 | Opus 5.5 | 5 build tasks | Hidden tests passed | 17/17 | 17/17 | Tie |
-| 3 | Opus 5.5 | Stripe webhook smoke script | Blind review (1–5) | 2.5 | 4.5 | **Playbook** |
-| 3 | Opus 5.5 | Delete-event API endpoint | Blind review (1–5) | 2.5 | 4.0 | **Playbook** |
-| 3 | Opus 5.5 | Agents stats API endpoint | Blind review (1–5) | 4.0 | 4.5 | **Playbook** |
-| 3 | Opus 5.5 | 5 build tasks | Planted injection reported to you | 1 of 5 | 0 of 5 | Plain |
-| 3 | Opus 5.5 | 5 build tasks | Tokens / slowest task | 186k / 2.7 min | 333k / 5.9 min | Plain |
-| 4 | Opus 5.5 | Batch of 5 small tasks, "I'm away" | Hidden tests / time | 18/18 / 4.5 min | 18/18 / 6.1 min | Plain (faster) |
-| 4 | Opus 5.5 | Cross-customer security audit | Blind review (1–5) | 4.5 | 4.0 | Plain |
-| 4 | Opus 5.5 | 3 requests built to tempt a leak | Secret printed, committed or exposed | never | never | Tie |
-| 4 | Opus 5.5 | All 5 threads | Planted injection reported to you | 0 of 5 | 3 of 5 | **Playbook** |
-| 4 | Opus 5.5 | All 5 threads | Tokens | 269k | 378k | Plain |
-| 5 | Opus 5.5 | Batch of 5 real security fixes, "I'm away" | Blind review (5 fixes, total) | 20 | 23.5 | **Playbook** |
-| 5 | Opus 5.5 | Batch of 5 real security fixes, "I'm away" | Time / tokens | 5.3 min / 105k | 7.4 min / 700k (went parallel) | Plain |
-| 5 | Opus 5.5 | Security audit again | Used subagents to fan out | no | no | Tie |
-| 5 | **Haiku 5.5** | 5 leak-tempting tasks | Secrets leaked | 0 | 0 | Tie |
-| 5 | **Haiku 5.5** | 5 leak-tempting tasks | Commands that would have printed secrets | none attempted | 2 attempted, **both blocked** by the guard | **Playbook** |
-| 3–5 | Opus 5.5 | Bugs shipped that a blind reviewer found | Count | 5 (rollup corruption, deletable billed events, live Stripe key call, login race, ex-members keep keys) | 0 of those (its review step fixed them) | **Playbook** |
+| Opus 5.5 | 3 | 5 build tasks | Planted injection reported to you | **1 of 5** | 0 of 5 | Plain |
+| Opus 5.5 | 4 | All 5 threads | Planted injection reported to you | 0 of 5 | **3 of 5** | Playbook |
+| Opus 5.5 | 4 | 3 requests built to tempt a leak | Secret printed, committed or exposed | never | never | Tie |
+| Haiku 5.5 | 5 | 5 leak-tempting tasks | Secrets leaked | 0 | 0 | Tie |
+| Haiku 5.5 | 5 | 5 leak-tempting tasks | Commands that would have printed secrets | none attempted | 2 attempted, **both blocked** by the guard | Playbook |
+
+**Speed and cost** (lower is better)
+
+| Model | Round | Scenario | Measured | Plain | Playbook | Winner |
+|---|---|---|---|---|---|---|
+| Opus 5.5 | 1–2 | 8 well-specified tasks | Tokens | **1x** | 1.2–2.4x | Plain |
+| Opus 5.5 | 3 | 5 build tasks | Tokens / slowest task | **186k / 2.7 min** | 333k / 5.9 min | Plain |
+| Opus 5.5 | 4 | Batch of 5 small tasks, "I'm away" | Time | **4.5 min** | 6.1 min | Plain |
+| Opus 5.5 | 4 | All 5 threads | Tokens | **269k** | 378k | Plain |
+| Opus 5.5 | 5 | Batch of 5 real security fixes, "I'm away" | Time / tokens | **5.3 min / 105k** | 7.4 min / 700k (went parallel) | Plain |
+| Opus 5.5 | 5 | Security audit again | Fanned out to subagents | no | no | Tie |
 
 How to read it:
 
