@@ -53,9 +53,9 @@ Keep the title as `[factory] <task> — <state>`, where state is one of
 
 ## Parallel work
 
-Run tasks in parallel only when AGENTS.md rule 6 says it's faster. On 3
-well-specified tasks, parallel child threads cost ~2.4x the tokens and saved
-no time.
+Run tasks in parallel only when AGENTS.md rule 6 says it's faster (independent
+pieces, over ~15 minutes in total). On 3 quick, well-specified tasks, parallel
+child threads cost ~2.4x the tokens and saved no time.
 
 A child starts with none of your context. Write its brief with the `delegate`
 skill, and add the branch to base on and the instruction to keep the record

@@ -21,13 +21,14 @@ spend tokens to save it, but don't add steps the model already does well.
    program itself when tests don't cover the behavior. Before reporting,
    re-read the request and check each requirement against the result. If
    something can't be fixed, say so in the first line of your report.
-6. **Parallel only when it's faster.** One agent by default. Split builds only
-   when the pieces are independent (separate files, no shared decisions) and
-   each outlasts the ~5 minutes a fresh agent spends loading context: 5+ such
-   tasks, tasks over ~30 minutes, or the human is away or asks (then spawning
-   child threads counts as requested). Read-only work (searching, reviewing
-   from several angles) can fan out to subagents freely. Load `delegate`
-   before briefing any subagent or child.
+6. **Parallel only when it's faster.** Estimate the work done one after
+   another. Split builds into child threads in their own worktrees when the
+   pieces are independent (separate files, no shared decisions) and the
+   total is over ~15 minutes: each child costs ~2 minutes to start, so five
+   5-minute tasks finish in ~7 minutes instead of 25. Otherwise use one agent.
+   Read-only work spanning 3+ separate areas (an audit, a codebase-wide
+   search) goes to parallel subagents, one area each, so you keep their
+   conclusions instead of the file dumps. Load `delegate` before briefing.
 7. **Legible status.** Title: `[workflow] <task> — <state>`. One task, one
    branch, one PR. If you're blocked on the human, say so in the first line.
 8. **Ask before outward actions.** Don't push to the default branch,
