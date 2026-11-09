@@ -163,9 +163,9 @@ Seven threads per arm:
 ## Across rounds 3 to 5
 
 - **Correctness on tests:** tie (35/35 both).
-- **Blind reviews of build work:** playbook won 5 of 8 comparisons, plain 1,
-  with 2 ties (round 3: 3–0; round 5 fixes: 2–0 with 3 ties; round 4 audit:
-  plain).
+- **Blind reviews:** 9 comparisons. The playbook won 5, plain won 1, and 3
+  were ties. Round 3 build tasks went 3–0 to the playbook; round 5 fixes
+  went 2–0 with 3 ties; the round 4 audit went to plain.
 - **Quality beyond tests:** playbook ahead on build tasks (won 3 of 3 blind
   reviews in round 3, mostly through its review step catching data and
   security bugs). Plain slightly ahead on the read-only audit.

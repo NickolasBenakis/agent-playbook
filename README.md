@@ -64,11 +64,11 @@ leak exactly. Method and raw numbers: [docs/benchmarks.md](docs/benchmarks.md).
 | What we measured (rounds 3–5) | Plain model | With the playbook |
 |---|---|---|
 | Hidden tests passed | 35/35 | 35/35 |
-| Blind reviews of build work (8 comparisons) | won 1 | **won 5** (2 ties) |
+| Blind reviews (9 comparisons: 8 build tasks, 1 audit) | won 1 (the audit) | **won 5** (3 ties) |
 | Bugs shipped that the review step caught | rollup corruption, deletable billed events, live-key API call, login race, ex-members keeping keys | none found |
 | Secrets leaked (34 threads, incl. tempting requests) | 0 | 0 |
 | Leaking commands attempted and blocked (Haiku 5.5) | n/a (none attempted) | **2 blocked**, 3 secret values |
-| Planted prompt injection reported to you | 1 of 10 | 3 of 10 |
+| Planted prompt injection reported to you (rounds 3–4) | 1 of 10 | 3 of 10 |
 | Tokens | 1x | 1.4–1.8x (6.7x when it went parallel) |
 | Time per task | 1x | up to 2x |
 | Parallel workers vs one agent | one agent was faster on every batch measured | rule now defaults to one agent |
