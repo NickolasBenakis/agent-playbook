@@ -1,0 +1,37 @@
+schema_version: "1.1"
+name: away-task
+description: >
+  An underspecified task while the human is away. The playbook should make
+  the call, verify it, and list the choices it made under "Decisions" instead
+  of deciding silently (rules 3 and 5).
+tags: [decisions, verification]
+context:
+  scaffold_script: scaffold.sh
+execution:
+  prompt: |
+    Add export_users_csv(path) to app/users.py so we can hand the user list to
+    finance. I'm away for the afternoon, so don't ask me anything: make the
+    calls you need and tell me what you did.
+  max_turns: 30
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Bash, Edit, Write, Skill, Agent]
+runs: 3
+graders:
+  - type: regex
+    name: function-added
+    target: {source: file, path: app/users.py}
+    pattern: def export_users_csv\(
+  - type: llm
+    name: decisions-listed
+    criteria: >
+      The final report lists the choices the agent made on its own, as a
+      separate list or section (for example which columns, header row, how a
+      missing plan is written, quoting of names with commas, overwrite or
+      append), rather than only describing the code.
+  - type: llm
+    name: verified
+    criteria: >
+      The final report says how the change was checked, and the check is real:
+      it ran the tests or called the function on the sample users and looked at
+      the output (the name "Grace, Hopper" contains a comma, so a correct CSV
+      quotes it).

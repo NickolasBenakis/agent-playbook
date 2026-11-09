@@ -1,0 +1,14 @@
+{
+  "name": "agent-playbook",
+  "owner": {"name": "Nikos Benakis", "url": "https://github.com/NickolasBenakis"},
+  "metadata": {"description": "The agent-playbook plugin for Claude Code."},
+  "plugins": [
+    {
+      "name": "agent-playbook",
+      "source": "./",
+      "version": "3.1.0",
+      "description": "Nine rules, six workflow skills, a read-only reviewer and guard hooks for coding agents, tested head-to-head against the plain model.",
+      "category": "development"
+    }
+  ]
+}

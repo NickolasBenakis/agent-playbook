@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Unit tests (hooks, secret guard, plugin)
+        run: python3 -m unittest discover tests -v
+      - name: Install and uninstall into a throwaway home
+        run: |
+          export HOME="$(mktemp -d)"
+          git config --global user.email ci@example.com
+          git config --global user.name ci
+          ./install.sh personal
+          test -L "$HOME/.claude/skills/factory"
+          test -L "$HOME/.claude/agents/playbook-reviewer.md"
+          grep -q "agent-playbook (managed by" "$HOME/.claude/CLAUDE.md"
+          grep -q AGENT_PLAYBOOK_HOOK=1 "$HOME/.claude/settings.json"
+          ./install.sh --uninstall
+          test ! -e "$HOME/.claude/skills/factory"
+          ! grep -q AGENT_PLAYBOOK_HOOK=1 "$HOME/.claude/settings.json"
+
+  plugin:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Validate the plugin and marketplace manifests
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate . --strict
+          claude plugin validate .claude-plugin/plugin.json --strict
