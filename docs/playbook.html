@@ -134,10 +134,13 @@
 
   <h2>Always</h2>
   <ul class="rules">
-    <li>One task → one branch → one PR, around 600–1,200 lines at most.</li>
-    <li>Fix tests, lint and CI before reporting. Never hand back red work.</li>
-    <li>Ask all your questions at once, each with a recommended answer.</li>
-    <li>No merging, deploying or pushing to main unless explicitly told.</li>
+    <li>Stay in scope: other fixes become <b>Follow-ups</b>.</li>
+    <li>Caps, fallbacks and guesses are listed under <b>Decisions</b>.</li>
+    <li>Prove it: a failing test before a bug fix, then tests, typecheck and a real run.</li>
+    <li>A fresh, read-only reviewer checks the diff against the task, security included.</li>
+    <li>Parallel only when it's faster; briefs pass pointers, not payloads (<code>delegate</code>).</li>
+    <li>Secrets stay out of the transcript, the code and git history.</li>
+    <li>Enforced by hooks in Claude Code: secret reads, prints, writes and commits are denied; unverified code can't be handed back; you're asked before a push to main, a force push, a merge or discarding uncommitted work.</li>
   </ul>
 </div>
 

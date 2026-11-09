@@ -7,54 +7,75 @@ description: Put a feature or epic on rails - plan, approve, build in an isolate
 
 The software delivery lifecycle on rails. The human chooses how much attention
 to pay: `checkpoints` (default: approve plan, review PR) or `auto` (approve
-nothing, just get the PR or merge if explicitly allowed).
+nothing, just get the PR, or merge if explicitly allowed).
+
+## The record
+
+One living record per task, kept current as you work: the PR description, or
+`docs/plans/<slug>.md` when a plan file is warranted (see stage 1). It has
+these sections, so anyone can see the state without reading the chat:
+
+- **Goal and finish line**: what done means, as checks.
+- **Progress**: timestamped steps done and next.
+- **Decision Log**: each interpretation, cap, fallback or trade-off, with why.
+- **Surprises**: what the code or tests revealed that the plan didn't expect.
+- **Follow-ups**: things worth doing that are out of scope.
+- **Verification**: the commands run and what a reviewer can run to check it.
 
 ## Stages
 
-Update the session/thread title at each stage: `[factory] <task> — <stage>`.
+Keep the title as `[factory] <task> — <state>`, where state is one of
+`planning`, `awaiting-approval`, `building`, `in-review`, `ci-red`,
+`blocked: <reason>`, `pr-open: <url>`, `done`.
 
-1. **plan**: read the code. If the spec is clear and the change fits in one
-   PR, put a short plan (approach, files, finish line) in the PR description
-   draft and move on; don't write a plan file. Write `docs/plans/<slug>.md`
-   only when the spec is ambiguous, the work splits into several PRs, or the
-   human asked to approve a plan:
-   - problem, approach, files to change, risks
-   - task breakdown: each task = one PR, ≤ ~1,200 changed lines
-   - finish line per task (tests to add or run, behavior to check)
-2. **awaiting-approval** (skip in `auto`): show the plan's task list and stop.
-   Ask once. Accept edits to the plan, then continue.
+1. **planning**: read the code. If the spec is clear and the change fits in
+   one PR, write a short plan (approach, files, finish line) into the record
+   and move on. Write `docs/plans/<slug>.md` only when the spec is ambiguous,
+   the work splits into several PRs (each ≤ ~1,200 changed lines), or the
+   human asked to approve a plan.
+2. **awaiting-approval** (skip in `auto`): show the task list and stop. Ask
+   once. Accept edits to the plan, then continue.
 3. **building**: per task, one branch `factory/<slug>-<n>` in an isolated
-   worktree. Run tasks in order by default; go parallel only under the
-   thresholds in AGENTS.md "Parallel work". Dependent tasks always run in
-   order, each based on the previous branch.
-4. **in-review**: before any human sees it, review your own diff adversarially:
-   use `/code-review` if available, otherwise a fresh subagent given only the
-   diff and the plan, asked to find correctness bugs. Fix confirmed findings.
-5. **ci**: run the repo's test/lint/typecheck locally, push, open a draft PR,
-   and watch CI. On red: read the failing log, fix, push again. After 3 failed
-   attempts on the same failure, mark `blocked: ci <check name>` and stop.
-6. **pr-open**: mark the PR ready. The description includes the task summary,
-   the plan, verification steps, a "Decisions" section (interpretations, caps,
-   fallbacks) and "Follow-ups".
-7. **done**: only merge if the human explicitly allowed merging for this
-   task; otherwise the PR being green and ready is done.
+   worktree. Tasks run in order unless the parallel rule below applies;
+   dependent tasks always run in order, each based on the previous branch.
+4. **in-review**: before any human sees it, get an independent review: the
+   `playbook-reviewer` subagent (give it the acceptance criteria and a diff
+   file: `git diff <base>...HEAD > "$TMPDIR/review.diff"`), `/code-review`, or
+   a fresh subagent with only the diff and the criteria. It covers security
+   when the change touches auth, input, money or stored data. Fix confirmed
+   findings; log rejected ones in the Decision Log.
+5. **ci**: run the repo's test/lint/typecheck locally, push the branch, open a
+   draft PR, and watch CI. On red: read the failing log, fix, push again. After
+   3 failed attempts on the same failure, mark `blocked: ci <check name>`.
+6. **pr-open**: mark the PR ready with the record as its description.
+7. **done**: merge only if the human explicitly allowed it for this task;
+   otherwise a green, ready PR is done.
+
+## Parallel work
+
+Run tasks in parallel only when AGENTS.md rule 6 says it's faster (each piece
+independent and 10+ minutes of agent time). Measured: on 3 feature tasks,
+parallel threads cost ~2.4x the tokens and saved no time; on 5 security fixes,
+5 parallel workers were 2 minutes slower at 6.7x the tokens.
+
+A child starts with none of your context. Write its brief with the `delegate`
+skill, and add the branch to base on and the instruction to keep the record
+sections above.
+
+In bb, one child thread per task:
+
+```sh
+bb thread spawn --parent-self --new-environment worktree --base-branch <branch> \
+  --title "[factory] <task n> — building" --prompt-file task-n.md
+bb thread wait <id>                     # or rely on parent notifications
+bb thread show <id> --work-status       # PR + CI state
+```
+
+The `factory-sweep` automation (see `automations/`) nudges stuck threads and
+red PRs so you don't have to poll.
 
 ## Rules
 
-- Bugs found along the way that aren't part of the task: open a separate small
-  PR or write them in the PR description under "Follow-ups". Don't widen scope.
 - Never block silently. If you need the human, the title says
   `blocked: <reason>` and your reply's first line says what you need.
 - Prefer the repo's conventions over this skill when they conflict.
-
-## In bb
-
-```sh
-# one child thread per task, each in its own worktree
-bb thread spawn --parent-self --new-environment worktree --base-branch main \
-  --title "[factory] <task n> — building" --prompt-file task-n.md
-bb thread show <id> --work-status     # PR + CI state
-```
-
-The `factory-sweep` automation (see `automations/` in the playbook repo)
-nudges stuck threads and red PRs so you don't have to poll.
