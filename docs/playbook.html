@@ -134,10 +134,11 @@
 
   <h2>Always</h2>
   <ul class="rules">
-    <li>One task → one branch → one PR, around 600–1,200 lines at most.</li>
-    <li>Fix tests, lint and CI before reporting. Never hand back red work.</li>
-    <li>Ask all your questions at once, each with a recommended answer.</li>
-    <li>No merging, deploying or pushing to main unless explicitly told.</li>
+    <li>Stay in scope: other fixes become <b>Follow-ups</b>.</li>
+    <li>Caps, fallbacks and guesses are listed under <b>Decisions</b>.</li>
+    <li>A fresh, read-only reviewer checks the diff against the task.</li>
+    <li>One task at a time unless there are 5+ tasks, long tasks, or you're away.</li>
+    <li>Enforced by hooks in Claude Code: no finishing while the repo check is red, and you're asked before a push to main, a force push or a merge.</li>
   </ul>
 </div>
 

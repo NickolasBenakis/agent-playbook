@@ -26,7 +26,8 @@ to start this and forget it until the result is ready.
    - a check that fails if the new side falls behind the old (counts,
      parity tests)
 5. **Review before reporting**: low attention means the human won't catch what
-   you miss. Once the finish line passes, have a fresh subagent review the diff
+   you miss. Once the finish line passes, have the `playbook-reviewer`
+   subagent (or another fresh subagent) review the diff
    for correctness bugs, especially on real-world inputs the fixtures don't
    cover (other quote styles, redirects, encodings). Fix confirmed findings.
 6. **Stop conditions**: finish line met and reviewed → report. Same failure 3
