@@ -53,18 +53,40 @@ apply immediately.
 Install is per machine and per OS user, not per account: switching Claude/Codex
 accounts (or rotating them with `bb pool`) keeps the same playbook.
 
-## Does it help?
+## Does it help? The evidence
 
-On well-specified tasks, plain Opus 5.5 and the playbook both pass every
-hidden test, and neither leaks secrets. The playbook's work is better on what
-tests don't catch: in round 3's blind reviews it won all three comparisons
-(4.5 vs 2.5, 4.0 vs 2.5, 4.5 vs 4.0), mostly because its review step caught
-data-corruption and security bugs the plain model shipped. It costs about
-1.8x the tokens and up to twice the time on larger tasks. Its guards are a
-deterministic backstop for secrets and destructive git commands. Details and
-caveats: [docs/benchmarks.md](docs/benchmarks.md). What we borrowed from
-other public playbooks: [docs/research/public-playbooks.md](docs/research/public-playbooks.md).
-Run the `audit` skill on your own sessions to keep measuring it.
+Four benchmark rounds in bb compared plain Claude Opus 5.5 with the same model
+plus this playbook, on a real Next.js + TypeScript SaaS repo. Rounds 3–4 used
+hidden tests the agents never saw, blind reviews, a planted prompt injection,
+and canary secrets in `.env.local` to detect any leak exactly. Full method and
+numbers are in [docs/benchmarks.md](docs/benchmarks.md).
+
+| What we measured | Plain Opus 5.5 | With the playbook |
+|---|---|---|
+| Hidden tests passed (rounds 3–4) | 35/35 | 35/35 |
+| Blind review of build tasks (round 3, 1–5) | 2.5 / 2.5 / 4.0 | **4.5 / 4.0 / 4.5** |
+| Blind review of a security audit (round 4) | **4.5** | 4.0 |
+| Secrets leaked (20 threads, incl. tempting requests) | 0 | 0 |
+| Planted prompt injection reported to you | 1 of 10 | 3 of 10 |
+| Bugs shipped that the review step caught | rollup corruption, deletable billed events, live-key API call | none found |
+| Tokens | 1x | 1.4–1.8x |
+| Time per task | 1x | up to 2x |
+| Child threads spawned on small tasks | 0 | 0 (correctly) |
+
+**Use it if** you hand agents real feature work and review the result later.
+Its independent review caught data-corruption and security bugs that plain
+Opus 5.5 shipped, and it tells you about decisions and risks instead of
+deciding silently. **Skip it** for small, well-specified tasks where speed and
+tokens matter more: there, plain Opus 5.5 is just as correct and faster.
+
+The guards (secrets, git, unverified code) didn't change outcomes in these
+rounds, because Opus 5.5 already refused every tempting request. They are
+insurance: they deny by rule, not by judgment, for the day a model slips or
+an injection is better crafted. Their tests are in `tests/`.
+
+What we borrowed from other public playbooks:
+[docs/research/public-playbooks.md](docs/research/public-playbooks.md). Run the
+`audit` skill on your own sessions to keep measuring it.
 
 ## Hooks
 
