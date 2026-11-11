@@ -34,7 +34,9 @@ tokens, so a public upload is a data leak even when the code isn't secret.
 3. **Check what's in each image.** Look at every screenshot before you
    upload it. Crop or redact visible secrets, tokens, personal data and
    production records. If you can't redact something, leave that image out
-   and say so in the PR.
+   and say so in the PR. Deleting the comment doesn't delete the upload;
+   only a GitHub Support ticket removes it. When in doubt, leave the image
+   out.
 4. **Write the body** as `$SHOTS/body.md`, next to the images. Put local
    references where the images should go. gh resolves paths in a
    `--body-file` relative to that file's directory, and replaces each
@@ -66,6 +68,9 @@ tokens, so a public upload is a data leak even when the code isn't secret.
    run `gh pr view 42 --json comments` (for an issue, use
    `gh issue view N --json body,comments`). Check that every image URL is a
    `github.com/user-attachments/...` link, not a local path.
+7. **Clean up.** Once the upload is verified, run `rm -rf "$SHOTS"`. gh
+   doesn't delete local files, and the temp directory is usually cleared
+   only on reboot, so the screenshots would otherwise stay on disk.
 
 ## When `--attach` can't be used
 
