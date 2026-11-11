@@ -1,7 +1,7 @@
 {
   "name": "agent-playbook",
   "version": "3.1.0",
-  "description": "Nine rules, six workflow skills, a read-only reviewer and guard hooks for coding agents, tested head-to-head against the plain model.",
+  "description": "Nine rules, six workflow skills, a PR screenshot skill, a read-only reviewer and guard hooks for coding agents, tested head-to-head against the plain model.",
   "author": {"name": "Nikos Benakis", "url": "https://github.com/NickolasBenakis"},
   "homepage": "https://github.com/NickolasBenakis/agent-playbook",
   "repository": "https://github.com/NickolasBenakis/agent-playbook",

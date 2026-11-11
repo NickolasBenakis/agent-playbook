@@ -8,8 +8,8 @@
 **A small playbook for coding agents, tested head-to-head against the plain
 model, including where it loses.**
 
-Nine rules, six workflow skills, a read-only reviewer and four hooks,
-for Claude Code, Codex and [bb](https://getbb.app). Always loaded: about 640 tokens of
+Nine rules, six workflow skills, a PR screenshot skill, a read-only reviewer and four hooks,
+for Claude Code, Codex and [bb](https://getbb.app). Always loaded: about 720 tokens of
 skill and agent descriptions (`claude plugin details`) plus the ~490-word
 `AGENTS.md`. What it changes:
 
@@ -138,7 +138,8 @@ carry the work.
 
 `/triage` sorts a task list into those cells. Trivial work skips all of it.
 `/delegate` writes subagent briefs, and `/audit` reads past sessions to find
-wasted steps.
+wasted steps. `/pr-screenshots` attaches screenshots to PRs with
+`gh --attach`, so they stay private on private repos.
 
 Interactive overview: [docs/playbook.html](docs/playbook.html). In bb, ask an agent to show it inline.
 
@@ -146,7 +147,8 @@ Interactive overview: [docs/playbook.html](docs/playbook.html). In bb, ask an ag
 AGENTS.md                 9 short rules every agent gets
 profiles/<name>.md        per-context additions (personal, work)
 profiles/<name>.local.md  private overlay, gitignored (secrets-free notes only)
-skills/                   triage, fanout, factory, oneshot, delegate, audit
+skills/                   triage, fanout, factory, oneshot, delegate, audit,
+                          pr-screenshots
 agents/                   playbook-reviewer: read-only reviewer (spec, bugs, security)
 hooks/                    guard hooks; hooks.json wires them up for the plugin
 evals/                    A/B cases for `claude plugin eval`
@@ -395,7 +397,7 @@ size and proof (checked against each README in November 2026):
 
 | | Shape | Proof it helps |
 |---|---|---|
-| **agent-playbook** | 9 rules, 6 skills, 4 hooks; process scales with impact and attention | A/B benchmarks against the plain model, losses included, plus a suite you can rerun |
+| **agent-playbook** | 9 rules, 7 skills, 4 hooks; process scales with impact and attention | A/B benchmarks against the plain model, losses included, plus a suite you can rerun |
 | [Superpowers](https://github.com/obra/superpowers) | Full methodology: brainstorm, plan, test-first, a subagent per task; its README calls the workflows mandatory | None we found |
 | [Spec Kit](https://github.com/github/spec-kit) / [OpenSpec](https://github.com/Fission-AI/OpenSpec) | A set of spec documents per change, then implement against it | None we found |
 | [ECC](https://github.com/affaan-m/ECC) (formerly everything-claude-code) | A large catalog: 71 agents and 314 skills per its README, plus hooks and memory | None we found |

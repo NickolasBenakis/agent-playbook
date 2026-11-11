@@ -5,6 +5,12 @@ or a workflow's behavior, a minor version adds something you can opt into,
 and a patch fixes a bug or the docs. Measured results live in
 [docs/benchmarks.md](docs/benchmarks.md).
 
+## Unreleased
+
+- **`pr-screenshots` skill.** Attaches screenshots and videos to PRs, issues
+  and comments with `gh --attach` (gh 2.99.0+). It forbids gists, public
+  repos and outside image hosts, so images from private repos stay private.
+
 ## 3.1.0 - 2026-11-09
 
 - **Claude Code plugin.** Install with

@@ -7,7 +7,7 @@
       "name": "agent-playbook",
       "source": "./",
       "version": "3.1.0",
-      "description": "Nine rules, six workflow skills, a read-only reviewer and guard hooks for coding agents, tested head-to-head against the plain model.",
+      "description": "Nine rules, six workflow skills, a PR screenshot skill, a read-only reviewer and guard hooks for coding agents, tested head-to-head against the plain model.",
       "category": "development"
     }
   ]
